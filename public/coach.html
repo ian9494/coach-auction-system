@@ -4,36 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coach - Auction</title>
+  <link rel="stylesheet" href="./coach.css" />
 </head>
 <body>
-  <h1>教練競標端</h1>
+  <main class="app">
+    <header class="header">
+      <p class="label">教練競標端</p>
+      <h1 id="coachTitle">Coach</h1>
+    </header>
 
-  <section>
-    <h2>目前選手：<span id="playerText">-</span></h2>
-    <h2>你的預算：<span id="budgetText">-</span></h2>
-    <h2>剩餘時間：<span id="timeText">-</span></h2>
-    <h2>狀態：<span id="statusText">-</span></h2>
-  </section>
+    <section class="card player-card">
+      <p class="label">目前競標選手</p>
+      <h2 id="playerText">-</h2>
 
-  <hr />
+      <div class="info-grid">
+        <div>
+          <p class="label">剩餘時間</p>
+          <p class="value" id="timeText">-</p>
+        </div>
+        <div>
+          <p class="label">剩餘預算</p>
+          <p class="value" id="budgetText">-</p>
+        </div>
+      </div>
 
-  <section>
-    <h2>你的出價</h2>
-    <p id="myBidText">尚未出價</p>
+      <p class="status" id="statusText">等待開始</p>
+    </section>
 
-    <input id="bidInput" type="number" placeholder="輸入金額" />
+    <section class="card">
+      <p class="label">你的目前出價</p>
+      <p class="my-bid" id="myBidText">尚未出價</p>
 
-    <br /><br />
+      <input id="bidInput" class="bid-input" type="number" min="0" placeholder="輸入出價金額" />
 
-    <button onclick="add(50)">+50</button>
-    <button onclick="add(100)">+100</button>
+      <div class="quick-buttons">
+        <button type="button" data-add="50">+50</button>
+        <button type="button" data-add="100">+100</button>
+        <button type="button" data-add="500">+500</button>
+      </div>
 
-    <br /><br />
+      <button id="submitBtn" class="submit-btn">送出 / 修改出價</button>
+    </section>
 
-    <button id="submitBtn">送出 / 修改出價</button>
-  </section>
-
-  <p id="messageText"></p>
+    <p id="messageText" class="message"></p>
+  </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="./coach.js"></script>

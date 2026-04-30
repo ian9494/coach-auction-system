@@ -1,0 +1,131 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+  background: #10131a;
+  color: #f4f6fb;
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.header h1 {
+  margin: 4px 0 0;
+  font-size: 28px;
+}
+
+.card {
+  background: #1a1f2b;
+  border: 1px solid #2d3445;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.label {
+  margin: 0;
+  color: #9aa4b8;
+  font-size: 14px;
+}
+
+.player-card h2 {
+  margin: 8px 0 18px;
+  font-size: 30px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.value {
+  margin: 6px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.status {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: #2b3142;
+  text-align: center;
+  font-weight: 700;
+}
+
+.my-bid {
+  margin: 8px 0 16px;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.bid-input {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #3a4256;
+  border-radius: 14px;
+  background: #11151f;
+  color: #fff;
+  font-size: 24px;
+  outline: none;
+}
+
+.bid-input:focus {
+  border-color: #6ea8ff;
+}
+
+.quick-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.quick-buttons button,
+.submit-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 16px 10px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quick-buttons button {
+  background: #2b3142;
+  color: #f4f6fb;
+}
+
+.submit-btn {
+  width: 100%;
+  background: #6ea8ff;
+  color: #07111f;
+}
+
+.submit-btn:disabled,
+.bid-input:disabled,
+.quick-buttons button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.message {
+  min-height: 24px;
+  color: #ffd166;
+  text-align: center;
+  font-weight: 700;
+}

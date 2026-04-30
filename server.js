@@ -16,6 +16,8 @@ app.get("/", (req, res) => {
   res.redirect("/admin.html");
 });
 
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "dev-token"; // 管理員驗證令牌，實際使用時應該從環境變數或安全存儲中獲取
+
 // 輸入教練列表，實際使用時可從資料庫或其他來源獲取
 const COACHES = [
   "coach1",
@@ -31,9 +33,15 @@ const COACHES = [
 const INITIAL_BUDGET = 1000; // 每位教練的初始預算
 // 儲存每位教練的預算狀態，格式為 { coachId: remainingBudget }
 const coachBudgets = {};
-for (const coach of COACHES) {
-  coachBudgets[coach] = INITIAL_BUDGET;
+
+// 重置所有教練的預算狀態
+function resetBudgets() {
+  for (const coach of COACHES) {
+    coachBudgets[coach] = INITIAL_BUDGET;
+    }
 }
+
+resetBudgets(); // 初始化預算狀態
 
 let auctionTimer = null; // 競標計時器
 
@@ -196,7 +204,7 @@ io.on("connection", (socket) => {
   // 添加教練房間，並發送當前狀態給教練端
   socket.on("join_coach", ({ coachId }) => {
     if (!COACHES.includes(coachId)) {
-      socket.emit("error_message", "Invalid coachId");
+      socket.emit("error_message", "無效的教練ID");
       return;
     }
 
@@ -229,13 +237,13 @@ io.on("connection", (socket) => {
   socket.on("submit_bid", ({ coachId, amount }) => {
     // 如果競標未在進行中，則返回錯誤訊息
     if (state.status !== "running") {
-      socket.emit("error_message", "Auction is not running");
+      socket.emit("error_message", "目前沒有正在進行的競標");
       return;
     }
 
     // 驗證教練ID是否有效，如果無效則返回錯誤訊息
     if (!COACHES.includes(coachId)) {
-      socket.emit("error_message", "Invalid coachId");
+      socket.emit("error_message", "錯誤的教練ID");
       return;
     }
 
@@ -243,13 +251,13 @@ io.on("connection", (socket) => {
 
     // 驗證出價金額是否為非負整數，如果無效則返回錯誤訊息
     if (!Number.isInteger(bidAmount) || bidAmount < 0) {
-      socket.emit("error_message", "Invalid bid amount");
+      socket.emit("error_message", "無效的出價金額");
       return;
     }
 
     // 驗證出價金額是否超過教練剩餘預算，如果超過則返回錯誤訊息
     if (bidAmount > coachBudgets[coachId]) {
-      socket.emit("error_message", "Bid amount exceeds remaining budget");
+      socket.emit("error_message", "出價金額超過剩餘預算!");
       return;
     }
 
@@ -263,6 +271,23 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("client disconnected:", socket.id);
   });
+});
+
+// 管理端重置預算的API，重置所有教練的預算狀態，然後廣播更新給所有客戶端
+app.post("/api/admin/reset_budget", (req, res) => {
+  const token = req.headers["x-admin-token"];
+
+  if (token !== ADMIN_TOKEN) {
+    return res.status(401).json({ ok: false, message: "Unauthorized" });
+  }
+
+  resetBudgets();
+  broadcastState();
+
+  res.json({ 
+    ok: true,
+    message: "Budgets have been reset",
+    budgets: coachBudgets,});
 });
 
 // 啟動伺服器，監聽指定的端口，並在控制台輸出伺服器運行的URL
