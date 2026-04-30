@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viewer - Coach Auction System</title>
+</head>
+<body>
+  <h1>選手競標 - 觀眾視角</h1>
+
+  <section>
+    <h2>目前選手：<span id="currentPlayerText">-</span></h2>
+    <h2>剩餘時間：<span id="timeLeftText">-</span></h2>
+    <h2>狀態：<span id="statusText">-</span></h2>
+  </section>
+
+  <hr />
+
+  <section id="runningSection">
+    <h2>目前出價</h2>
+    
+    <table border="1">
+      <thead>
+        <tr>
+          <th>教練</th>
+          <th>出價金額</th>
+          <th>剩餘預算</th>
+        </tr>
+      </thead>
+      <tbody id="bidsTableBody">
+        <!-- 出價資料將由 JavaScript 動態填充 -->
+      </tbody>
+    </table>
+  </section>
+
+  <section id="resultSection" style="display: none;">
+    <h2>得標結果</h2>
+    <p>得標教練：<span id="winnerText">-</span></p>
+    <p>得標金額：<span id="winningAmountText">-</span></p>
+  </section>
+
+  <p id="messageText"></p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./viewer.js"></script>
+</body>
+</html>

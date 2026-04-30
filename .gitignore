@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code (可選)
+.vscode/
+
+# Cloudflare tunnel（你之後會用到）
+.cloudflare/
+cloudflared.log
+
+# PM2（如果你之後用）
+.pm2/
+
+# build / temp
+dist/
+build/
+tmp/
+temp/

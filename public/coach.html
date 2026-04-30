@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coach - Auction</title>
+</head>
+<body>
+  <h1>教練競標端</h1>
+
+  <section>
+    <h2>目前選手：<span id="playerText">-</span></h2>
+    <h2>你的預算：<span id="budgetText">-</span></h2>
+    <h2>剩餘時間：<span id="timeText">-</span></h2>
+    <h2>狀態：<span id="statusText">-</span></h2>
+  </section>
+
+  <hr />
+
+  <section>
+    <h2>你的出價</h2>
+    <p id="myBidText">尚未出價</p>
+
+    <input id="bidInput" type="number" placeholder="輸入金額" />
+
+    <br /><br />
+
+    <button onclick="add(50)">+50</button>
+    <button onclick="add(100)">+100</button>
+
+    <br /><br />
+
+    <button id="submitBtn">送出 / 修改出價</button>
+  </section>
+
+  <p id="messageText"></p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./coach.js"></script>
+</body>
+</html>
