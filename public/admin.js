@@ -56,15 +56,22 @@ function renderState(state) {
       ? state.winningAmount
       : "-";
 
-  renderBids(state.allBids || state.bids || {});
+  renderBids(state.allBids || state.bids || {}, state.budgets || {});
 }
 
-function renderBids(bids) {
+function renderBids(bids, budgets = {}) {
   bidList.innerHTML = "";
 
   for (const [coachId, amount] of Object.entries(bids)) {
+    const budget = budgets[coachId];
+
     const li = document.createElement("li");
-    li.textContent = `${coachId}: ${amount === null ? "尚未出價" : amount}`;
+
+    li.textContent =
+      `${coachId}: ` +
+      `${amount === null ? "尚未出價" : amount}` +
+      `（剩餘預算：${budget === undefined ? "-" : budget}）`;
+
     bidList.appendChild(li);
   }
 }

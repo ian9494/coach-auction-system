@@ -1,0 +1,135 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+  color: white;
+  background: transparent;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 95%;
+  height: 45%;   /* 👉 控制高度（建議 25~35%） */
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  padding: 16px 24px;
+
+  pointer-events: none; /* OBS 不會擋點擊 */
+}
+
+.top-info {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  background: rgba(10, 13, 20, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  margin: 0;
+  color: #9aa4b8;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.top-info h1 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+
+.timer-box {
+  text-align: right;
+}
+
+.timer-box h2 {
+  margin: 4px 0 0;
+  font-size: 28px;
+  color: #ffd166;
+}
+
+.coach-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.coach-card {
+  min-height: 90px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(18, 23, 34, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.coach-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #2b3142;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+}
+
+.coach-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.bid-value {
+  margin: 6px 0 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #6ea8ff;
+}
+
+.budget-value {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #9aa4b8;
+}
+
+.result-section {
+  padding: 24px 48px;
+  border-radius: 28px;
+  background: rgba(10, 13, 20, 0.94);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.result-section h1 {
+  margin: 4px 0;
+  font-size: 56px;
+}
+
+.result-section h2 {
+  margin: 0;
+  font-size: 40px;
+  color: #ffd166;
+}
+
+.hidden {
+  display: none;
+}

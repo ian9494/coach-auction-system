@@ -4,42 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Viewer - Coach Auction System</title>
+  <link rel="stylesheet" href="./viewer.css" />
 </head>
 <body>
-  <h1>選手競標 - 觀眾視角</h1>
+  <main class="overlay">
+    <section class="top-info">
+      <div>
+        <p class="label">目前競標選手</p>
+        <h1 id="currentPlayerText">-</h1>
+      </div>
 
-  <section>
-    <h2>目前選手：<span id="currentPlayerText">-</span></h2>
-    <h2>剩餘時間：<span id="timeLeftText">-</span></h2>
-    <h2>狀態：<span id="statusText">-</span></h2>
-  </section>
+      <div class="timer-box">
+        <p class="label">剩餘時間</p>
+        <h2 id="timeLeftText">-</h2>
+      </div>
+    </section>
 
-  <hr />
+    <section id="runningSection" class="coach-grid"></section>
 
-  <section id="runningSection">
-    <h2>目前出價</h2>
-    
-    <table border="1">
-      <thead>
-        <tr>
-          <th>教練</th>
-          <th>出價金額</th>
-          <th>剩餘預算</th>
-        </tr>
-      </thead>
-      <tbody id="bidsTableBody">
-        <!-- 出價資料將由 JavaScript 動態填充 -->
-      </tbody>
-    </table>
-  </section>
-
-  <section id="resultSection" style="display: none;">
-    <h2>得標結果</h2>
-    <p>得標教練：<span id="winnerText">-</span></p>
-    <p>得標金額：<span id="winningAmountText">-</span></p>
-  </section>
-
-  <p id="messageText"></p>
+    <section id="resultSection" class="result-section hidden">
+      <p class="label">得標結果</p>
+      <h1 id="winnerText">-</h1>
+      <h2 id="winningAmountText">-</h2>
+    </section>
+  </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="./viewer.js"></script>

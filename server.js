@@ -68,19 +68,33 @@ resetBids(); // 初始化出價狀態
 
 // 計算競標結果，找出最高出價的教練 return:得標教練ID和出價金額
 function getWinner() {
-  let winner = null;
-  let winningAmount = -1;
+  let highestAmount = -1;
+  let candidates = [];
 
   for (const [coachId, amount] of Object.entries(state.bids)) {
-    if (typeof amount === "number" && amount > winningAmount) {
-      winner = coachId;
-      winningAmount = amount;
+    if (typeof amount !== "number") continue;
+
+    if (amount > highestAmount) {
+      highestAmount = amount;
+      candidates = [coachId];
+    } else if (amount === highestAmount) {
+      candidates.push(coachId);
     }
   }
 
+  if (candidates.length === 0) {
+    return {
+      winner: null,
+      winningAmount: null,
+    };
+  }
+
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  const winner = candidates[randomIndex];
+
   return {
     winner,
-    winningAmount: winner ? winningAmount : null,
+    winningAmount: highestAmount,
   };
 }
 
@@ -215,6 +229,11 @@ io.on("connection", (socket) => {
 
   // 處理開始競標事件，驗證輸入並啟動競標
   socket.on("start_auction", ({ playerName, duration }) => {
+    if (state.status === "running") {
+      socket.emit("error_message", "已有競標正在進行中，請先結束本輪競標");
+      return;
+    }
+
     if (!playerName || typeof playerName !== "string") {
       socket.emit("error_message", "playerName is required");
       return;
@@ -288,6 +307,24 @@ app.post("/api/admin/reset_budget", (req, res) => {
     ok: true,
     message: "Budgets have been reset",
     budgets: coachBudgets,});
+});
+
+app.post("/api/admin/reset_auction", (req, res) => {
+  const token = req.headers["x-admin-token"];
+  
+  if (token !== ADMIN_TOKEN) {
+    return res.status(401).json({ ok: false, message: "Unauthorized" });
+  }
+
+  state.status = "idle";
+  state.currentPlayer = null;
+  state.timeLeft = 0;
+  state.winner = null;
+  state.winningAmount = null;
+  resetBudgets();
+  resetBids();
+  broadcastState();
+  res.json({ ok: true, message: "Auction has been reset" });
 });
 
 // 啟動伺服器，監聽指定的端口，並在控制台輸出伺服器運行的URL
