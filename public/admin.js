@@ -1,6 +1,7 @@
 const socket = io();
 
 const playerNameInput = document.getElementById("playerNameInput");
+const memberButtonContainer = document.getElementById("memberButtonContainer");
 const durationInput = document.getElementById("durationInput");
 const startButton = document.getElementById("startButton");
 const endButton = document.getElementById("endButton");
@@ -14,6 +15,34 @@ const bidList = document.getElementById("bidList");
 const messageText = document.getElementById("messageText");
 
 socket.emit("join_admin");
+
+// 獲取成員名單並生成按鈕
+async function fetchMemberList() {
+  try {
+    const response = await fetch("/api/members");
+    if (!response.ok) throw new Error("Failed to fetch");
+    const members = await response.json();
+    
+    memberButtonContainer.innerHTML = "";
+    members.forEach(name => {
+      const btn = document.createElement("button");
+      btn.textContent = name;
+      btn.type = "button";
+      btn.style.padding = "5px 10px";
+      btn.style.cursor = "pointer";
+      
+      btn.addEventListener("click", () => {
+        playerNameInput.value = name;
+      });
+      
+      memberButtonContainer.appendChild(btn);
+    });
+  } catch (error) {
+    console.error("Error loading member list:", error);
+  }
+}
+
+fetchMemberList();
 
 startButton.addEventListener("click", () => {
   const playerName = playerNameInput.value.trim();
@@ -39,6 +68,11 @@ endButton.addEventListener("click", () => {
 
 socket.on("admin_state", (state) => {
   renderState(state);
+  // 如果競標結束，自動刷新成員名單按鈕並清空輸入框
+  if (state.status === "ended") {
+    playerNameInput.value = "";
+    fetchMemberList();
+  }
 });
 
 socket.on("error_message", (message) => {
@@ -78,4 +112,10 @@ function renderBids(bids, budgets = {}) {
 
 function setMessage(message) {
   messageText.textContent = message;
+  messageText.style.display = "block";
+  
+  // 3秒後自動消失
+  setTimeout(() => {
+    messageText.style.display = "none";
+  }, 3000);
 }

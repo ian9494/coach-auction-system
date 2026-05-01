@@ -3,6 +3,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +15,27 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.redirect("/admin.html");
+});
+
+app.get("/api/members", (req, res) => {
+  const filePath = path.join(__dirname, "data", "member.csv");
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) {
+      console.error("Error reading member.csv:", err);
+      return res.status(500).json({ error: "Failed to read member list" });
+    }
+    // 解析 CSV 格式 (逗號與換行) 並過濾掉空字串
+    const members = data
+      .split(/[\n\r,]+/)
+      .map((m) => m.trim())
+      .filter((m) => m !== "");
+    
+    // 過濾掉已經標出去的選手
+    const soldNames = auctionHistory.map(h => h.playerName);
+    const availableMembers = members.filter(m => !soldNames.includes(m));
+    
+    res.json(availableMembers);
+  });
 });
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "dev-token"; // 管理員驗證令牌，實際使用時應該從環境變數或安全存儲中獲取
@@ -40,6 +62,8 @@ function resetBudgets() {
     coachBudgets[coach] = INITIAL_BUDGET;
     }
 }
+
+let auctionHistory = []; // 儲存已得標的選手資訊
 
 resetBudgets(); // 初始化預算狀態
 
@@ -162,9 +186,49 @@ function endAuction() {
 
   if (state.winner && state.winningAmount !== null) {
     coachBudgets[state.winner] -= state.winningAmount;
+    
+    // 記錄得標結果
+    auctionHistory.push({
+      playerName: state.currentPlayer,
+      winner: state.winner,
+      amount: state.winningAmount,
+      time: new Date().toLocaleString()
+    });
+    
+    // 將結果存入 CSV
+    saveHistoryToCSV();
   }
 
   broadcastState();
+}
+
+// 將競標紀錄存入 CSV (分隊列出)
+function saveHistoryToCSV() {
+  const historyFilePath = path.join(__dirname, "data", "auction_results.csv");
+  
+  // 建立各隊的成員列表
+  const teams = {};
+  COACHES.forEach(coach => teams[coach] = []);
+  
+  auctionHistory.forEach(record => {
+    if (teams[record.winner]) {
+      teams[record.winner].push(record.playerName);
+    }
+  });
+
+  // 計算最大成員數以便建立 CSV 列
+  const maxMembers = Math.max(...Object.values(teams).map(t => t.length), 0);
+  
+  let csvContent = COACHES.join(",") + "\n";
+  
+  for (let i = 0; i < maxMembers; i++) {
+    const row = COACHES.map(coach => teams[coach][i] || "");
+    csvContent += row.join(",") + "\n";
+  }
+
+  fs.writeFile(historyFilePath, "\ufeff" + csvContent, "utf8", (err) => {
+    if (err) console.error("Error saving auction_results.csv:", err);
+  });
 }
 
 // 開始競標，初始化狀態並啟動計時器，每秒更新剩餘時間並廣播狀態給所有客戶端

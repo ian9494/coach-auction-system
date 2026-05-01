@@ -1,0 +1,149 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+  color: #e2e8f0;
+  background: #0f172a;
+}
+
+h1, h2 {
+  color: #f1f5f9;
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+}
+
+section {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #94a3b8;
+}
+
+input[type="text"],
+input[type="number"] {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 100%;
+  max-width: 300px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+button[id="endButton"] {
+  background: #ef4444;
+}
+
+button[id="endButton"]:hover {
+  background: #dc2626;
+}
+
+#memberButtonContainer {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#memberButtonContainer button {
+  background: #334155;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+#memberButtonContainer button:hover {
+  background: #475569;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  background: rgba(15, 23, 42, 0.5);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.status-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+#timeLeftText {
+  color: #f59e0b;
+}
+
+#bidList {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+#bidList li {
+  background: #232936;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #4ade80;
+}
+
+#messageText {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #10b981;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: none;
+}

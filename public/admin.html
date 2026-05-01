@@ -4,50 +4,68 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Coach Auction System</title>
+  <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
   <h1>競標管理端</h1>
 
   <section>
-    <h2>開始競標</h2>
+    <h2>競標控制</h2>
 
-    <label>
-      選手名稱：
-      <input id="playerNameInput" type="text" placeholder="輸入選手名稱" />
-    </label>
+    <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+      <label style="flex: 1; min-width: 250px;">
+        選手名稱
+        <input id="playerNameInput" type="text" placeholder="輸入或從下方選擇選手" />
+      </label>
 
-    <br /><br />
+      <label style="width: 120px;">
+        競標秒數
+        <input id="durationInput" type="number" value="90" min="1" />
+      </label>
 
-    <label>
-      競標秒數：
-      <input id="durationInput" type="number" value="90" min="1" />
-    </label>
+      <div style="margin-bottom: 8px;">
+        <button id="startButton">開始競標</button>
+        <button id="endButton">強制結束</button>
+      </div>
+    </div>
 
-    <br /><br />
-
-    <button id="startButton">開始競標</button>
-    <button id="endButton">強制結束</button>
+    <div id="memberButtonContainer">
+      <!-- 選手按鈕將由 JS 動態生成 -->
+    </div>
   </section>
-
-  <hr />
 
   <section>
     <h2>目前狀態</h2>
-    <p>狀態：<span id="statusText">-</span></p>
-    <p>目前選手：<span id="currentPlayerText">-</span></p>
-    <p>剩餘時間：<span id="timeLeftText">-</span></p>
-    <p>得標者：<span id="winnerText">-</span></p>
-    <p>得標金額：<span id="winningAmountText">-</span></p>
+    <div class="status-grid">
+      <div class="status-item">
+        <div class="status-label">狀態</div>
+        <div id="statusText" class="status-value">-</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">目前選手</div>
+        <div id="currentPlayerText" class="status-value">-</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">剩餘時間</div>
+        <div id="timeLeftText" class="status-value">-</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">得標者</div>
+        <div id="winnerText" class="status-value">-</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">金額</div>
+        <div id="winningAmountText" class="status-value">-</div>
+      </div>
+    </div>
   </section>
 
-  <hr />
-
   <section>
-    <h2>目前出價</h2>
+    <h2>出價狀況</h2>
     <ul id="bidList"></ul>
   </section>
 
-  <p id="messageText"></p>
+  <div id="messageText"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="./admin.js"></script>
