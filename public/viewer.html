@@ -29,6 +29,17 @@
     </section>
   </main>
 
+  <!-- 把動畫遮罩移到 main 之外，確保全螢幕顯示 -->
+  <div id="rosterOverlay" class="roster-overlay hidden">
+    <div class="roster-card">
+      <p class="label">目前隊員組合</p>
+      <h2 id="rosterCoachName">-</h2>
+      <div id="rosterMemberList" class="member-list">
+        <!-- 隊員將動態填入 -->
+      </div>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="./viewer.js"></script>
 </body>

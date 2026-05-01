@@ -28,3 +28,4 @@ dist/
 build/
 tmp/
 temp/
+/data

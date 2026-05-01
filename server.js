@@ -5,6 +5,8 @@ const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
 
+const STATE_FILE = path.join(__dirname, "data", "state.json");
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -12,6 +14,55 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
+
+// 持久化狀態函式
+function saveState() {
+  const dataToSave = {
+    status: state.status === "running" ? "ended" : state.status, // 重放時如果不為 idle/ended 就強制結束
+    currentPlayer: state.currentPlayer,
+    timeLeft: state.timeLeft,
+    bids: state.bids,
+    budgets: coachBudgets,
+    history: auctionHistory,
+    winner: state.winner,
+    winningAmount: state.winningAmount
+  };
+
+  const tmpFile = STATE_FILE + ".tmp";
+  try {
+    fs.writeFileSync(tmpFile, JSON.stringify(dataToSave, null, 2));
+    fs.renameSync(tmpFile, STATE_FILE);
+  } catch (err) {
+    console.error("Error saving state:", err);
+  }
+}
+
+function loadState() {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      const data = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+      
+      state.status = data.status === "running" ? "ended" : data.status;
+      state.currentPlayer = data.currentPlayer;
+      state.timeLeft = data.timeLeft;
+      state.winner = data.winner;
+      state.winningAmount = data.winningAmount;
+      state.bids = data.bids || {};
+      
+      for (const coachId of COACHES) {
+        coachBudgets[coachId] = data.budgets && data.budgets[coachId] !== undefined 
+          ? data.budgets[coachId] 
+          : INITIAL_BUDGET;
+      }
+      
+      auctionHistory = data.history || [];
+      return true;
+    }
+  } catch (err) {
+    console.error("Error loading state:", err);
+  }
+  return false;
+}
 
 app.get("/", (req, res) => {
   res.redirect("/admin.html");
@@ -65,7 +116,9 @@ function resetBudgets() {
 
 let auctionHistory = []; // 儲存已得標的選手資訊
 
-resetBudgets(); // 初始化預算狀態
+if (!loadState()) {
+  resetBudgets(); // 初始化預算狀態
+}
 
 let auctionTimer = null; // 競標計時器
 
@@ -124,24 +177,21 @@ function getWinner() {
 
 // 獲取要傳給觀眾端的狀態，包含競標狀態、當前球員、剩餘時間、出價狀態等資訊
 function getViewerState() {
-  if (state.status === "ended") {
-    return {
-      status: state.status,
-      currentPlayer: state.currentPlayer,
-      timeLeft: state.timeLeft,
-      winner: state.winner,
-      winningAmount: state.winningAmount,
-      budgets: coachBudgets,
-    };
-  }
-
-  return {
+  const baseState = {
     status: state.status,
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,
-    bids: state.bids,
+    winner: state.winner,
+    winningAmount: state.winningAmount,
     budgets: coachBudgets,
+    history: auctionHistory, // 確保 history 隨時都有傳出去
   };
+
+  if (state.status !== "ended") {
+    baseState.bids = state.bids;
+  }
+
+  return baseState;
 }
 
 // 獲取要傳給教練端的狀態，包含競標狀態、當前球員、剩餘時間、出價狀態等資訊
@@ -199,6 +249,7 @@ function endAuction() {
     saveHistoryToCSV();
   }
 
+  saveState();
   broadcastState();
 }
 
@@ -246,16 +297,18 @@ function startAuction(playerName, duration = 90) {
   state.winningAmount = null;
   resetBids();
 
+  saveState();
   broadcastState();
 
-  auctionTimer = setInterval(() => { // 每秒更新剩餘時間 並檢查是否結束競標 及時廣播狀態給所有客戶端
+  auctionTimer = setInterval(() => { 
     state.timeLeft -= 1;
 
-    if (state.timeLeft <= 0) {
+    if (state.timeLeft < 0) { // 修改這裡：從 <= 0 改為 < 0，這樣 0 秒時會廣播一次再結束
       endAuction();
       return;
     }
 
+    if (state.timeLeft % 5 === 0) saveState(); // 每5秒紀錄一次剩餘時間
     broadcastState();
   }, 1000);
 }
@@ -347,6 +400,7 @@ io.on("connection", (socket) => {
     // 更新出價狀態，將教練的出價金額存儲在 state.bids 中，格式為 { coachId: bidAmount }
     state.bids[coachId] = bidAmount;
 
+    saveState();
     broadcastState();
   });
 
@@ -365,6 +419,8 @@ app.post("/api/admin/reset_budget", (req, res) => {
   }
 
   resetBudgets();
+  auctionHistory = [];
+  saveState();
   broadcastState();
 
   res.json({ 
@@ -385,8 +441,10 @@ app.post("/api/admin/reset_auction", (req, res) => {
   state.timeLeft = 0;
   state.winner = null;
   state.winningAmount = null;
+  auctionHistory = [];
   resetBudgets();
   resetBids();
+  saveState();
   broadcastState();
   res.json({ ok: true, message: "Auction has been reset" });
 });
