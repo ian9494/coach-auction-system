@@ -148,13 +148,21 @@ function getWinner() {
   let highestAmount = -1;
   let candidates = [];
 
+  // 獲取目前各隊人數
+  const teamCounts = {};
+  COACHES.forEach(c => teamCounts[c] = auctionHistory.filter(h => h.winner === c).length);
+
   for (const [coachId, amount] of Object.entries(state.bids)) {
-    if (typeof amount !== "number") continue;
+    // 嚴格判斷數值，處理 0 元出價比 null (無出價) 優先
+    if (amount === null || amount === undefined || typeof amount !== "number") continue;
+    
+    // 檢查該隊是否已滿 5 人
+    if (teamCounts[coachId] >= 5) continue;
 
     if (amount > highestAmount) {
       highestAmount = amount;
       candidates = [coachId];
-    } else if (amount === highestAmount) {
+    } else if (amount === highestAmount && amount !== -1) {
       candidates.push(coachId);
     }
   }
@@ -166,6 +174,7 @@ function getWinner() {
     };
   }
 
+  // 從符合資格（最高價且未滿員）的人中隨機選出一個
   const randomIndex = Math.floor(Math.random() * candidates.length);
   const winner = candidates[randomIndex];
 
@@ -204,6 +213,7 @@ function getCoachState(coachId) {
     budget: coachBudgets[coachId],
     winner: state.status === "ended" ? state.winner : null,
     winningAmount: state.status === "ended" ? state.winningAmount : null,
+    history: auctionHistory, // 新增這行：讓教練端也收得到得標歷史
   };
 }
 
@@ -394,6 +404,13 @@ io.on("connection", (socket) => {
     // 驗證出價金額是否超過教練剩餘預算，如果超過則返回錯誤訊息
     if (bidAmount > coachBudgets[coachId]) {
       socket.emit("error_message", "出價金額超過剩餘預算!");
+      return;
+    }
+
+    // 檢查該隊伍是否已滿 5 人
+    const currentCount = auctionHistory.filter(h => h.winner === coachId).length;
+    if (currentCount >= 5) {
+      socket.emit("error_message", "你的隊伍已滿 5 人，無法再出價！");
       return;
     }
 

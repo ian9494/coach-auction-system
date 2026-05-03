@@ -90,6 +90,21 @@ body {
   border: 3px solid rgba(255, 255, 255, 0.18);
 }
 
+.team-icons {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.member-dot {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+}
+
 .coach-name {
   margin: 0;
   font-size: 16px;
@@ -157,6 +172,118 @@ body {
 @keyframes highlight {
   from { box-shadow: 0 0 5px #4ade80; }
   to { box-shadow: 0 0 20px #4ade80; }
+}
+
+/* 結算區樣式 */
+.result-section {
+  width: 100%;
+  padding: 20px 30px; /* 減少上下內邊距 */
+  border-radius: 28px;
+  background: rgba(10, 13, 20, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px; /* 減少網格與文字間距 */
+  animation: slideUp 0.5s ease-out;
+}
+
+.team-grid-container {
+  width: 100%;
+  display: grid;
+  /* 9 欄：4個直列 + 1個文字區 + 4個直列 */
+  grid-template-columns: repeat(4, 1fr) 250px repeat(4, 1fr); 
+  gap: 10px;
+  align-items: center; /* 讓文字在垂直方向也置中 */
+}
+
+.result-info-center {
+  text-align: center;
+  padding: 0 10px;
+}
+
+.result-info-center .label {
+  font-size: 14px;
+  color: #9aa4b8;
+  margin-bottom: 2px;
+}
+
+.result-info-center h1 {
+  font-size: 34px;
+  margin: 0;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.result-info-center h2 {
+  font-size: 30px;
+  margin: 0;
+  color: #ffd166;
+}
+
+.team-column {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 80px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.team-column-name {
+  font-size: 10px;
+  color: #9aa4b8;
+  font-weight: bold;
+  margin-bottom: 2px;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.team-player-mini {
+  width: 40px; /* 再次縮小寬度，讓直列變窄 */
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-overlay-text {
+  text-align: center;
+  margin-top: -10px; /* 稍微往上拉近內容 */
+}
+
+.result-overlay-text .label {
+  font-size: 16px;
+  color: #9aa4b8;
+  margin-bottom: 5px;
+}
+
+.result-overlay-text h1 {
+  font-size: 38px; /* 縮小教練名 */
+  margin: 0;
+  line-height: 1.1;
+}
+
+.result-overlay-text h2 {
+  font-size: 28px; /* 縮小金額 */
+  margin: 0;
+  color: #ffd166;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .hidden {

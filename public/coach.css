@@ -129,3 +129,24 @@ body {
   text-align: center;
   font-weight: 700;
 }
+
+.my-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.my-team-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+
+.my-team-item span {
+  color: #6ea8ff;
+}

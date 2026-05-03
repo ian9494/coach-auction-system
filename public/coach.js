@@ -8,6 +8,8 @@ const playerText = document.getElementById("playerText");
 const timeText = document.getElementById("timeText");
 const budgetText = document.getElementById("budgetText");
 const statusText = document.getElementById("statusText");
+const myTeamCount = document.getElementById("myTeamCount");
+const myTeamList = document.getElementById("myTeamList");
 
 const myBidText = document.getElementById("myBidText");
 const bidInput = document.getElementById("bidInput");
@@ -67,6 +69,19 @@ function render(state) {
     typeof state.budget === "number" ? state.budget : "-";
 
   statusText.textContent = translateStatus(state.status);
+
+  // 更新已選名單
+  if (state.history) {
+    const myHistory = state.history.filter(h => h.winner === coachId);
+    myTeamCount.textContent = myHistory.length;
+    myTeamList.innerHTML = "";
+    myHistory.forEach(h => {
+      const div = document.createElement("div");
+      div.className = "my-team-item";
+      div.innerHTML = `${h.playerName} <span>$${h.amount}</span>`;
+      myTeamList.appendChild(div);
+    });
+  }
 
   if (state.myBid !== null && state.myBid !== undefined) {
     myBidText.textContent = state.myBid;
