@@ -31,13 +31,28 @@ body {
 .top-info {
   width: 100%;
   margin-bottom: 18px;
-  padding: 10px 16px;
+  padding: 12px 24px;
   border-radius: 22px;
   background: rgba(10, 13, 20, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.current-player-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.player-avatar-large {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  background: #1e293b;
 }
 
 .label {
@@ -192,53 +207,56 @@ body {
 .team-grid-container {
   width: 100%;
   display: grid;
-  /* 9 欄：4個直列 + 1個文字區 + 4個直列 */
-  grid-template-columns: repeat(4, 1fr) 250px repeat(4, 1fr); 
-  gap: 10px;
-  align-items: center; /* 讓文字在垂直方向也置中 */
+  /* 使用 1fr 2fr 1fr 分配空間，讓中間文字區占比較大，兩側成員區展開 */
+  grid-template-columns: 1fr auto 1fr;
+  gap: 40px;
+  align-items: center;
+  justify-content: center;
 }
 
 .result-info-center {
   text-align: center;
-  padding: 0 10px;
+  padding: 0 40px;
+  min-width: 400px; /* 增加最小寬度讓中間更顯眼 */
 }
 
 .result-info-center .label {
-  font-size: 14px;
+  font-size: 18px; /* 稍微加大標籤 */
   color: #9aa4b8;
-  margin-bottom: 2px;
+  margin-bottom: 8px;
 }
 
 .result-info-center h1 {
-  font-size: 34px;
+  font-size: 64px; /* 再放大隊伍名 */
   margin: 0;
   color: #fff;
   white-space: nowrap;
 }
 
 .result-info-center h2 {
-  font-size: 30px;
-  margin: 0;
+  font-size: 56px; /* 再放大金額 */
+  margin: 10px 0 0;
   color: #ffd166;
 }
 
 .team-column {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  padding: 6px;
+  background: rgba(255, 255, 255, 0.05); /* 稍微加深背景 */
+  border-radius: 16px;
+  padding: 20px 30px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 橫向排列成員 */
   align-items: center;
-  gap: 6px;
-  min-height: 80px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  justify-content: center;
+  gap: 25px; /* 成員間距加大 */
+  min-height: 120px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .team-column-name {
-  font-size: 10px;
+  font-size: 14px;
   color: #9aa4b8;
   font-weight: bold;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   text-align: center;
   white-space: nowrap;
   max-width: 100%;
@@ -246,11 +264,31 @@ body {
 }
 
 .team-player-mini {
-  width: 40px; /* 再次縮小寬度，讓直列變窄 */
-  height: 40px;
-  border-radius: 6px;
+  width: 60px; /* 增大頭貼尺寸 */
+  height: 60px;
+  border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: #2b3142;
+}
+
+.member-mini-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.member-mini-name {
+  font-size: 14px; /* 從 11px 加大到 14px */
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
 }
 
 .result-overlay-text {

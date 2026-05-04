@@ -23,6 +23,7 @@ const COACH_NAMES = {
 };
 
 const currentPlayerText = document.getElementById("currentPlayerText");
+const currentPlayerAvatar = document.getElementById("currentPlayerAvatar");
 const timeLeftText = document.getElementById("timeLeftText");
 const runningSection = document.getElementById("runningSection");
 const resultSection = document.getElementById("resultSection");
@@ -77,18 +78,27 @@ function showRosterAnimation(winnerId, history, newPlayer) {
   });
 
   // 顯示動畫遮罩
-  rosterOverlay.classList.remove("hidden");
-  rosterOverlay.classList.add("visible");
+  // rosterOverlay.classList.remove("hidden");
+  // rosterOverlay.classList.add("visible");
 
   // 5秒後自動消失
   setTimeout(() => {
-    rosterOverlay.classList.remove("visible");
-    rosterOverlay.classList.add("hidden");
+    // rosterOverlay.classList.remove("visible");
+    // rosterOverlay.classList.add("hidden");
   }, 5000);
 }
 
 function renderState(state) {
   currentPlayerText.textContent = state.currentPlayer ?? "-";
+  
+  // 更新選手頭貼
+  if (state.currentPlayer) {
+    currentPlayerAvatar.src = `./assets/players/${state.currentPlayer}.jpg`;
+    currentPlayerAvatar.style.display = "block";
+  } else {
+    currentPlayerAvatar.src = `./assets/players/default.jpg`;
+  }
+  currentPlayerAvatar.onerror = function() { this.src = "./assets/players/default.jpg"; };
   
   // 修正倒數顯示邏輯
   const displayTime = typeof state.timeLeft === "number" ? Math.max(0, state.timeLeft) : "-";
@@ -115,46 +125,63 @@ function renderTeamGrid(history, state) {
   // 清空並重新渲染
   teamGridContainer.innerHTML = "";
 
-  // 分成前 4 隊與後 4 隊
-  const firstHalf = COACHES.slice(0, 4);
-  const secondHalf = COACHES.slice(4, 8);
+  // 1. 如果沒有贏家，顯示「無人出價」或其他提示
+  if (!state || !state.winner) {
+    const noBidInfo = document.createElement("div");
+    noBidInfo.className = "result-info-center";
+    noBidInfo.innerHTML = `
+      <p class="label">得標結果</p>
+      <h1>無人出價</h1>
+      <h2>-</h2>
+    `;
+    teamGridContainer.appendChild(noBidInfo);
+    return;
+  }
 
-  const createColumn = (coachId) => {
-    const teamColumn = document.createElement("div");
-    teamColumn.className = "team-column";
-    const title = document.createElement("div");
-    title.className = "team-column-name";
-    title.textContent = COACH_NAMES[coachId] ?? coachId;
-    teamColumn.appendChild(title);
+  const winnerId = state.winner;
+  const teamMembers = history.filter(h => h.winner === winnerId);
+  // 只取最後加入的 4 個成員 (即前 4 位顯示的頭貼)
+  const displayMembers = teamMembers.slice(-4).reverse();
 
-    const teamMembers = history.filter(h => h.winner === coachId);
-    teamMembers.forEach(member => {
-      const img = document.createElement("img");
-      img.className = "team-player-mini";
-      img.src = `./assets/players/${member.playerName}.jpg`;
-      img.onerror = function() { this.src = "./assets/players/default.jpg"; };
-      teamColumn.appendChild(img);
-    });
-    return teamColumn;
+  const createMemberElement = (member) => {
+    const container = document.createElement("div");
+    container.className = "member-mini-container";
+
+    const img = document.createElement("img");
+    img.className = "team-player-mini";
+    img.src = `./assets/players/${member.playerName}.jpg`;
+    img.onerror = function() { this.src = "./assets/players/default.jpg"; };
+    
+    const nameTag = document.createElement("span");
+    nameTag.className = "member-mini-name";
+    nameTag.textContent = member.playerName;
+
+    container.appendChild(img);
+    container.appendChild(nameTag);
+    return container;
   };
 
-  // 1. 渲染前 4 隊
-  firstHalf.forEach(id => teamGridContainer.appendChild(createColumn(id)));
+  // 2. 渲染贏家的前 2 個成員 (左側)
+  const leftGroup = document.createElement("div");
+  leftGroup.className = "team-column";
+  displayMembers.slice(0, 2).forEach(m => leftGroup.appendChild(createMemberElement(m)));
+  teamGridContainer.appendChild(leftGroup);
 
-  // 2. 插入中間的文字資訊 (只在 ended 狀態顯示詳細資訊)
+  // 3. 插入中間的得標資訊
   const centerInfo = document.createElement("div");
   centerInfo.className = "result-info-center";
-  if (state && state.status === "ended") {
-    centerInfo.innerHTML = `
-      <p class="label">得標結果</p>
-      <h1>${state.winner ? (COACH_NAMES[state.winner] ?? state.winner) : "無人出價"}</h1>
-      <h2>${state.winningAmount !== null && state.winningAmount !== undefined ? `$${state.winningAmount}` : "-"}</h2>
-    `;
-  }
+  centerInfo.innerHTML = `
+    <p class="label">得標結果</p>
+    <h1>${COACH_NAMES[winnerId] ?? winnerId}</h1>
+    <h2>${state.winningAmount !== null && state.winningAmount !== undefined ? `$${state.winningAmount}` : "-"}</h2>
+  `;
   teamGridContainer.appendChild(centerInfo);
 
-  // 3. 渲染後 4 隊
-  secondHalf.forEach(id => teamGridContainer.appendChild(createColumn(id)));
+  // 4. 渲染贏家的後 2 個成員 (右側)
+  const rightGroup = document.createElement("div");
+  rightGroup.className = "team-column";
+  displayMembers.slice(2, 4).forEach(m => rightGroup.appendChild(createMemberElement(m)));
+  teamGridContainer.appendChild(rightGroup);
 }
 
 function renderCoachCards(bids, budgets, history = []) {
