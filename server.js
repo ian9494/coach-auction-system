@@ -68,6 +68,18 @@ app.get("/", (req, res) => {
   res.redirect("/admin.html");
 });
 
+// Twitch Bot 與前端獲取成交紀錄 API (從 auctionHistory 獲取完整資訊，而非單純從 CSV)
+app.get("/api/results", (req, res) => {
+  // 為了讓 Twitch bot 和展示頁面能拿到金額，我們優先從內存的 auctionHistory 讀取
+  // 如果伺服器剛重啟，auctionHistory 會從 state.json 加載回來
+  const results = auctionHistory.map(h => ({
+    playerName: h.playerName,
+    coachId: h.winner,
+    amount: h.amount
+  }));
+  res.json(results);
+});
+
 app.get("/api/members", (req, res) => {
   const filePath = path.join(__dirname, "data", "member.csv");
   fs.readFile(filePath, "utf8", (err, data) => {
@@ -273,12 +285,13 @@ function saveHistoryToCSV() {
   
   auctionHistory.forEach(record => {
     if (teams[record.winner]) {
+      // 根據您的需求，我們只存選手名字在 CSV 中以維持原本格式
       teams[record.winner].push(record.playerName);
     }
   });
 
   // 計算最大成員數以便建立 CSV 列
-  const maxMembers = Math.max(...Object.values(teams).map(t => t.length), 0);
+  const maxMembers = Math.max(...Object.values(teams).map(t => t.length), 1);
   
   let csvContent = COACHES.join(",") + "\n";
   
