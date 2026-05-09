@@ -39,29 +39,12 @@ function saveState() {
 
 function loadState() {
   try {
-    if (fs.existsSync(STATE_FILE)) {
-      const data = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
-      
-      state.status = data.status === "running" ? "ended" : data.status;
-      state.currentPlayer = data.currentPlayer;
-      state.timeLeft = data.timeLeft;
-      state.winner = data.winner;
-      state.winningAmount = data.winningAmount;
-      state.bids = data.bids || {};
-      
-      for (const coachId of COACHES) {
-        coachBudgets[coachId] = data.budgets && data.budgets[coachId] !== undefined 
-          ? data.budgets[coachId] 
-          : INITIAL_BUDGET;
-      }
-      
-      auctionHistory = data.history || [];
-      return true;
-    }
+    if (!fs.existsSync(STATE_FILE)) return null;
+    return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
   } catch (err) {
     console.error("Error loading state:", err);
   }
-  return false;
+  return null;
 }
 
 app.get("/", (req, res) => {
@@ -128,9 +111,7 @@ function resetBudgets() {
 
 let auctionHistory = []; // 儲存已得標的選手資訊
 
-if (!loadState()) {
-  resetBudgets(); // 初始化預算狀態
-}
+const restoredState = loadState();
 
 let auctionTimer = null; // 競標計時器
 
@@ -146,6 +127,26 @@ const state = {
 };
 
 // 重置所有教練的出價狀態
+if (restoredState) {
+  state.status = restoredState.status === "running" ? "ended" : restoredState.status;
+  state.currentPlayer = restoredState.currentPlayer;
+  state.timeLeft = restoredState.timeLeft;
+  state.winner = restoredState.winner;
+  state.winningAmount = restoredState.winningAmount;
+  state.bids = restoredState.bids || {};
+
+  for (const coachId of COACHES) {
+    coachBudgets[coachId] =
+      restoredState.budgets && restoredState.budgets[coachId] !== undefined
+        ? restoredState.budgets[coachId]
+        : INITIAL_BUDGET;
+  }
+
+  auctionHistory = restoredState.history || [];
+} else {
+  resetBudgets();
+}
+
 function resetBids() {
   state.bids = {};
   for (const coach of COACHES) {
@@ -153,7 +154,9 @@ function resetBids() {
   }
 }
 
-resetBids(); // 初始化出價狀態
+if (!restoredState) {
+  resetBids();
+}
 
 // 計算競標結果，找出最高出價的教練 return:得標教練ID和出價金額
 function getWinner() {
@@ -441,12 +444,19 @@ io.on("connection", (socket) => {
 });
 
 // 管理端重置預算的API，重置所有教練的預算狀態，然後廣播更新給所有客戶端
-app.post("/api/admin/reset_budget", (req, res) => {
+function verifyAdminToken(req, res) {
   const token = req.headers["x-admin-token"];
 
   if (token !== ADMIN_TOKEN) {
-    return res.status(401).json({ ok: false, message: "Unauthorized" });
+    res.status(401).json({ ok: false, message: "Unauthorized" });
+    return false;
   }
+
+  return true;
+}
+
+function resetBudgetHandler(req, res) {
+  if (!verifyAdminToken(req, res)) return;
 
   resetBudgets();
   auctionHistory = [];
@@ -457,14 +467,10 @@ app.post("/api/admin/reset_budget", (req, res) => {
     ok: true,
     message: "Budgets have been reset",
     budgets: coachBudgets,});
-});
+}
 
-app.post("/api/admin/reset_auction", (req, res) => {
-  const token = req.headers["x-admin-token"];
-  
-  if (token !== ADMIN_TOKEN) {
-    return res.status(401).json({ ok: false, message: "Unauthorized" });
-  }
+function resetAuctionHandler(req, res) {
+  if (!verifyAdminToken(req, res)) return;
 
   state.status = "idle";
   state.currentPlayer = null;
@@ -477,7 +483,12 @@ app.post("/api/admin/reset_auction", (req, res) => {
   saveState();
   broadcastState();
   res.json({ ok: true, message: "Auction has been reset" });
-});
+}
+
+app.post("/api/admin/reset_budget", resetBudgetHandler);
+app.post("/api/admin/reset-budgets", resetBudgetHandler);
+app.post("/api/admin/reset_auction", resetAuctionHandler);
+app.post("/api/admin/reset-auctions", resetAuctionHandler);
 
 // 啟動伺服器，監聽指定的端口，並在控制台輸出伺服器運行的URL
 server.listen(PORT, () => {

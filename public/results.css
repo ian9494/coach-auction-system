@@ -1,126 +1,206 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-panel: rgba(7, 14, 27, 0.9);
+  --bg-card: rgba(13, 28, 49, 0.88);
+  --line: rgba(148, 197, 255, 0.2);
+  --line-strong: rgba(103, 232, 249, 0.45);
+  --text: #eef7ff;
+  --muted: #8ea7be;
+  --blue: #60a5fa;
+  --cyan: #67e8f9;
+  --green: #5eead4;
+  --gold: #fde68a;
+  --shadow: 0 18px 48px rgba(0, 8, 20, 0.42);
+}
+
 body {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  font-family: system-ui, -apple-system, sans-serif;
   margin: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: transparent; /* 方便與 viewer 切換 */
+  color: var(--text);
+  background: transparent;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
 }
 
 .results-overlay {
   position: absolute;
   bottom: 0;
   left: 50%;
+  width: min(95vw, 1720px);
+  height: 45%;
+  padding: 14px 0 20px;
   transform: translateX(-50%);
-  width: 95%;
-  height: 45%; /* 與 viewer.css 的 .overlay 高度相同 */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 16px 0;
 }
 
 .grid-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 18px;
   width: 100%;
   height: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .coach-card {
-  background: rgba(18, 23, 34, 0.92);
-  border-radius: 22px;
-  padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(30, 64, 175, 0.14), rgba(8, 47, 73, 0.08)),
+    var(--bg-card);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 28px rgba(0, 8, 20, 0.28);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(14px);
 }
+
+.coach-card.is-latest {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.08), 0 16px 36px rgba(8, 145, 178, 0.2);
+}
+
 .coach-name {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #ffd166;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.14);
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 10px;
+}
+
+.coach-title {
+  min-width: 0;
+  color: #f8fbff;
+  font-size: 17px;
+  font-weight: 950;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coach-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .member-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   overflow-y: auto;
+  scrollbar-color: rgba(103, 232, 249, 0.45) transparent;
 }
 
 .member-item {
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 30px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(148, 197, 255, 0.08);
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 0.85rem;
+  gap: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
 }
+
 .member-item:last-child {
   border-bottom: none;
 }
 
-/* 最新成員高亮特效 */
-.new-member {
-  animation: highlight-pulse 2s infinite ease-in-out;
-  background: rgba(255, 209, 102, 0.2);
-  border-radius: 4px;
-  padding-left: 4px;
-  padding-right: 4px;
-  position: relative;
+.member-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.new-member::before {
-  content: 'NEW';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.6rem;
-  background: #ef4444;
-  color: white;
-  padding: 1px 4px;
+.member-price {
+  flex: 0 0 auto;
+  color: var(--cyan);
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-member {
+  color: #60758b;
+}
+
+.new-member {
+  margin: 4px 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  background: rgba(94, 234, 212, 0.12);
+  animation: highlight-pulse 2s infinite ease-in-out;
+}
+
+.new-member .member-name::before {
+  content: "NEW";
+  margin-right: 8px;
+  padding: 2px 5px;
   border-radius: 4px;
-  font-weight: bold;
+  background: rgba(103, 232, 249, 0.18);
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 950;
+  vertical-align: 1px;
+}
+
+.loading {
+  position: fixed;
+  left: 50%;
+  bottom: 24%;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-panel);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: var(--shadow);
+}
+
+footer {
+  display: none;
 }
 
 @keyframes highlight-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.4);
-    background: rgba(255, 209, 102, 0.25);
+    box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.24);
   }
   50% {
-    box-shadow: 0 0 10px 4px rgba(255, 209, 102, 0);
-    background: rgba(255, 209, 102, 0.1);
+    box-shadow: 0 0 18px 3px rgba(94, 234, 212, 0.12);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.4);
-    background: rgba(255, 209, 102, 0.25);
+    box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.24);
   }
 }
 
-.member-price {
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-.loading {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #94a3b8;
-}
-footer {
-  text-align: center;
-  margin-top: 40px;
-  color: #64748b;
-  font-size: 0.8rem;
+@media (max-width: 1100px) {
+  .results-overlay {
+    height: 58%;
+  }
+
+  .grid-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
 }

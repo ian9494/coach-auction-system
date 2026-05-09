@@ -10,7 +10,7 @@
   <main class="overlay">
     <section class="top-info">
       <div class="current-player-box">
-        <img id="currentPlayerAvatar" class="player-avatar-large" src="./assets/players/default.jpg" alt="Player Image" />
+        <img id="currentPlayerAvatar" class="player-avatar-large" alt="Player Image" />
         <div>
           <p class="label">目前競標選手</p>
           <h1 id="currentPlayerText">-</h1>
@@ -26,20 +26,15 @@
     <section id="runningSection" class="coach-grid"></section>
 
     <section id="resultSection" class="result-section hidden">
-      <div id="teamGridContainer" class="team-grid-container">
-        <!-- 這裡會由 JS 動態填入，文字會夾在中間 -->
-      </div>
+      <div id="teamGridContainer" class="team-grid-container"></div>
     </section>
   </main>
 
-  <!-- 把動畫遮罩移到 main 之外，確保全螢幕顯示 -->
   <div id="rosterOverlay" class="roster-overlay hidden">
     <div class="roster-card">
-      <p class="label">目前隊員組合</p>
+      <p class="label">最新隊伍名單</p>
       <h2 id="rosterCoachName">-</h2>
-      <div id="rosterMemberList" class="member-list">
-        <!-- 隊員將動態填入 -->
-      </div>
+      <div id="rosterMemberList" class="member-list"></div>
     </div>
   </div>
 
