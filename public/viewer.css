@@ -26,14 +26,60 @@ body {
   color: var(--text);
   background: transparent;
   overflow: hidden;
+  /* 邊框位子預留 */
+  border: 20px solid transparent; 
+}
+
+/* 活動 Logo 區域 */
+.event-logo-container {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  width: 200px;
+  height: 100px;
+  /* border: 1px dashed rgba(255, 255, 255, 0.3); */ /* 預留空間提示 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.event-logo-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 贊助商 Logo 區域 */
+.sponsors-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  padding: 0 40px;
+  z-index: 100;
+  /* border-top: 1px solid var(--line); */
+}
+
+.sponsor-placeholder {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 2px;
 }
 
 .overlay {
   position: absolute;
-  bottom: 0;
+  bottom: 70px; /* 留給贊助商空間 */
   left: 50%;
-  width: min(95vw, 1720px);
-  height: 45%;
+  width: min(90vw, 1720px); /* 縮小寬度給邊框空間 */
+  height: 40%;
   padding: 14px 0 20px;
   transform: translateX(-50%);
   display: flex;
@@ -133,10 +179,12 @@ body {
     var(--bg-card);
   border: 1px solid var(--line);
   box-shadow: 0 12px 28px rgba(0, 8, 20, 0.28);
-  display: grid;
-  grid-template-columns: 54px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* 垂直置中 */
+  justify-content: flex-start; /* 水平靠左 */
+  padding: 10px 14px; /* 增加左側內距讓視覺不那麼太貼邊 */
+  gap: 16px;
   overflow: hidden;
 }
 
@@ -169,31 +217,34 @@ body {
 .coach-name {
   margin: 0;
   color: #f8fbff;
-  font-size: 16px;
-  font-weight: 900;
+  font-size: 14px; /* 稍微縮小名稱字體 */
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.5px;
 }
 
 .bid-value {
-  margin: 5px 0 0;
+  margin: 2px 0 0; /* 減少上方間距 */
   color: var(--cyan);
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 950;
+  font-size: 20px; /* 縮小金額字體，避免與名稱擠在一起 */
+  line-height: 1.2;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
 .bid-value.no-bid {
   color: #60758b;
+  font-size: 18px;
 }
 
 .budget-value {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
 }
 
 .team-icons {
