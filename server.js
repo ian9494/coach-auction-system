@@ -11,9 +11,32 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const bidRateByCoach = new Map();
+const bidRateByIp = new Map();
+
+
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
+
+
+function canSubmitBid(coachId, ip) {
+  const now = Date.now();
+
+  const lastCoachBid = bidRateByCoach.get(coachId) || 0;
+  const recentIpBids = ipHistory.filter((t) => now-t < 2000);
+
+  if (recentIpBids.length >= 3) {
+    return false; // 同一 IP 2 秒內超過 3 次出價
+  }
+
+  recentIpBids.push(now);
+  bidRateByIp.set(ip, recentIpBids);
+  bidRateByCoach.set(coachId, now);
+
+  return true;
+}
 
 // 持久化狀態函式
 function saveState() {
@@ -410,6 +433,12 @@ io.on("connection", (socket) => {
     }
 
     const bidAmount = Number(amount);
+    const ip = socket.data.ip || socket.handshake.address;
+
+    if (!canSubmitBid(coachId, ip)) {
+      socket.emit("error_message", "出價過於頻繁，請稍後再試");
+      return;
+    }
 
     // 驗證出價金額是否為非負整數，如果無效則返回錯誤訊息
     if (!Number.isInteger(bidAmount) || bidAmount < 0) {
