@@ -1,0 +1,7 @@
+{
+  "ignore": [
+    "data/state.json",
+    "data/state.json.tmp",
+    "data/auction_results.csv"
+  ]
+}

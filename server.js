@@ -25,7 +25,11 @@ function canSubmitBid(coachId, ip) {
   const now = Date.now();
 
   const lastCoachBid = bidRateByCoach.get(coachId) || 0;
-  const recentIpBids = ipHistory.filter((t) => now-t < 2000);
+  if (now - lastCoachBid < 300) {
+    return false;
+  }
+
+  const recentIpBids = (bidRateByIp.get(ip) || []).filter((t) => now - t < 2000);
 
   if (recentIpBids.length >= 3) {
     return false; // 同一 IP 2 秒內超過 3 次出價
@@ -41,9 +45,10 @@ function canSubmitBid(coachId, ip) {
 // 持久化狀態函式
 function saveState() {
   const dataToSave = {
-    status: state.status === "running" ? "ended" : state.status, // 重放時如果不為 idle/ended 就強制結束
+    status: state.status,
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,
+    savedAt: Date.now(),
     bids: state.bids,
     budgets: coachBudgets,
     history: auctionHistory,
@@ -151,9 +156,16 @@ const state = {
 
 // 重置所有教練的出價狀態
 if (restoredState) {
-  state.status = restoredState.status === "running" ? "ended" : restoredState.status;
+  state.status = restoredState.status;
   state.currentPlayer = restoredState.currentPlayer;
   state.timeLeft = restoredState.timeLeft;
+  if (state.status === "running" && restoredState.savedAt) {
+    const elapsedSeconds = Math.floor((Date.now() - restoredState.savedAt) / 1000);
+    state.timeLeft = Math.max(0, state.timeLeft - elapsedSeconds);
+    if (state.timeLeft === 0) {
+      state.status = "ended";
+    }
+  }
   state.winner = restoredState.winner;
   state.winningAmount = restoredState.winningAmount;
   state.bids = restoredState.bids || {};
@@ -331,13 +343,27 @@ function saveHistoryToCSV() {
   });
 }
 
-// 開始競標，初始化狀態並啟動計時器，每秒更新剩餘時間並廣播狀態給所有客戶端
-function startAuction(playerName, duration = 90) {
+function startAuctionTimer() {
   if (auctionTimer) {
     clearInterval(auctionTimer);
     auctionTimer = null;
   }
 
+  auctionTimer = setInterval(() => {
+    state.timeLeft -= 1;
+
+    if (state.timeLeft < 0) { // 修改這裡：從 <= 0 改為 < 0，這樣 0 秒時會廣播一次再結束
+      endAuction();
+      return;
+    }
+
+    if (state.timeLeft % 5 === 0) saveState(); // 每5秒紀錄一次剩餘時間
+    broadcastState();
+  }, 1000);
+}
+
+// 開始競標，初始化狀態並啟動計時器，每秒更新剩餘時間並廣播狀態給所有客戶端
+function startAuction(playerName, duration = 90) {
   state.status = "running";
   state.currentPlayer = playerName;
   state.duration = duration;
@@ -349,17 +375,11 @@ function startAuction(playerName, duration = 90) {
   saveState();
   broadcastState();
 
-  auctionTimer = setInterval(() => { 
-    state.timeLeft -= 1;
+  startAuctionTimer();
+}
 
-    if (state.timeLeft < 0) { // 修改這裡：從 <= 0 改為 < 0，這樣 0 秒時會廣播一次再結束
-      endAuction();
-      return;
-    }
-
-    if (state.timeLeft % 5 === 0) saveState(); // 每5秒紀錄一次剩餘時間
-    broadcastState();
-  }, 1000);
+if (state.status === "running") {
+  startAuctionTimer();
 }
 
 // 處理客戶端連接，根據不同的事件處理加入觀眾、管理員和教練房間，以及開始競標、結束競標和提交出價等操作
