@@ -53,6 +53,9 @@ submitBtn.addEventListener("click", () => {
 });
 
 socket.on("coach_state", (state) => {
+  if (state.coach) {
+    coachTitle.textContent = state.coach.name;
+  }
   render(state);
 });
 

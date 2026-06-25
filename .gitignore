@@ -28,4 +28,5 @@ dist/
 build/
 tmp/
 temp/
-/data
+/data/*
+!/data/coach.csv

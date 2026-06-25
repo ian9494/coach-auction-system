@@ -1,26 +1,10 @@
 const socket = io();
 
-const COACHES = [
-  "coach1",
-  "coach2",
-  "coach3",
-  "coach4",
-  "coach5",
-  "coach6",
-  "coach7",
-  "coach8",
-];
+let coaches = [];
 
-const COACH_NAMES = {
-  coach1: "Coach 1",
-  coach2: "Coach 2",
-  coach3: "Coach 3",
-  coach4: "Coach 4",
-  coach5: "Coach 5",
-  coach6: "Coach 6",
-  coach7: "Coach 7",
-  coach8: "Coach 8",
-};
+function getCoachName(coachId) {
+  return coaches.find((coach) => coach.id === coachId)?.name ?? coachId;
+}
 
 const currentPlayerText = document.getElementById("currentPlayerText");
 const currentPlayerAvatar = document.getElementById("currentPlayerAvatar");
@@ -39,6 +23,7 @@ let lastStatus = "idle";
 socket.emit("join_viewer");
 
 socket.on("viewer_state", (state) => {
+  coaches = state.coaches || coaches;
   console.log("State updated:", state.status, "Winner:", state.winner);
 
   if (state.status === "ended" && state.winner && lastStatus !== "ended") {
@@ -51,7 +36,7 @@ socket.on("viewer_state", (state) => {
 });
 
 function showRosterAnimation(winnerId, history, newPlayer) {
-  const coachName = COACH_NAMES[winnerId] ?? winnerId;
+  const coachName = getCoachName(winnerId);
   rosterCoachName.textContent = coachName;
   rosterMemberList.innerHTML = "";
 
@@ -157,7 +142,7 @@ function renderTeamGrid(history, state) {
   centerInfo.className = "result-info-center";
   centerInfo.innerHTML = `
     <p class="label">得標教練</p>
-    <h1>${COACH_NAMES[winnerId] ?? winnerId}</h1>
+    <h1>${getCoachName(winnerId)}</h1>
     <h2>${state.winningAmount !== null && state.winningAmount !== undefined ? `$${state.winningAmount}` : "-"}</h2>
   `;
   teamGridContainer.appendChild(centerInfo);
@@ -171,12 +156,13 @@ function renderTeamGrid(history, state) {
 function renderCoachCards(bids, budgets, history = []) {
   runningSection.innerHTML = "";
 
-  for (const coachId of COACHES) {
+  for (const coach of coaches) {
+    const coachId = coach.id;
     const amount = bids[coachId];
     const budget = budgets[coachId];
     const teamMembers = history.filter((record) => record.winner === coachId);
     const hasBid = amount !== null && amount !== undefined;
-    const coachName = COACH_NAMES[coachId] ?? coachId;
+    const coachName = coach.name;
 
     const card = document.createElement("article");
     card.className = `coach-card${hasBid ? " has-bid" : ""}`;

@@ -13,6 +13,7 @@ const winnerText = document.getElementById("winnerText");
 const winningAmountText = document.getElementById("winningAmountText");
 const bidList = document.getElementById("bidList");
 const messageText = document.getElementById("messageText");
+let coachNames = {};
 
 socket.emit("join_admin");
 
@@ -67,6 +68,9 @@ endButton.addEventListener("click", () => {
 });
 
 socket.on("admin_state", (state) => {
+  coachNames = Object.fromEntries(
+    (state.coaches || []).map((coach) => [coach.id, coach.name])
+  );
   renderState(state);
   // 如果競標結束，自動刷新成員名單按鈕並清空輸入框
   if (state.status === "ended") {
@@ -102,7 +106,7 @@ function renderBids(bids, budgets = {}) {
     const li = document.createElement("li");
 
     li.textContent =
-      `${coachId}: ` +
+      `${coachNames[coachId] || coachId}: ` +
       `${amount === null ? "尚未出價" : amount}` +
       `（剩餘預算：${budget === undefined ? "-" : budget}）`;
 

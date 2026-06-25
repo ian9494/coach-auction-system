@@ -115,16 +115,41 @@ app.get("/api/members", (req, res) => {
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "dev-token"; // 管理員驗證令牌，實際使用時應該從環境變數或安全存儲中獲取
 
 // 輸入教練列表，實際使用時可從資料庫或其他來源獲取
-const COACHES = [
-  "coach1",
-  "coach2",
-  "coach3",
-  "coach4",
-  "coach5",
-  "coach6",
-  "coach7",
-  "coach8",
-];
+const COACH_FILE = path.join(__dirname, "data", "coach.csv");
+
+function loadCoaches() {
+  const rows = fs.readFileSync(COACH_FILE, "utf8")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+
+  const coaches = rows.map((line, index) => {
+    const [rawId, ...nameParts] = line.split(",");
+    const id = rawId.trim();
+    const name = nameParts.join(",").trim() || id;
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      throw new Error(`Invalid coach id "${id}" on coach.csv line ${index + 1}`);
+    }
+
+    return { id, name };
+  });
+
+  const ids = coaches.map((coach) => coach.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error("Duplicate coach id found in data/coach.csv");
+  }
+
+  return coaches;
+}
+
+const COACH_CONFIG = loadCoaches();
+const COACHES = COACH_CONFIG.map((coach) => coach.id);
+
+app.get("/api/coaches", (req, res) => {
+  res.json(COACH_CONFIG);
+});
 
 const INITIAL_BUDGET = 1000; // 每位教練的初始預算
 // 儲存每位教練的預算狀態，格式為 { coachId: remainingBudget }
@@ -166,11 +191,13 @@ if (restoredState) {
       state.status = "ended";
     }
   }
-  state.winner = restoredState.winner;
-  state.winningAmount = restoredState.winningAmount;
-  state.bids = restoredState.bids || {};
+  state.winner = COACHES.includes(restoredState.winner) ? restoredState.winner : null;
+  state.winningAmount = state.winner ? restoredState.winningAmount : null;
+  const restoredBids = restoredState.bids || {};
 
   for (const coachId of COACHES) {
+    state.bids[coachId] =
+      restoredBids[coachId] !== undefined ? restoredBids[coachId] : null;
     coachBudgets[coachId] =
       restoredState.budgets && restoredState.budgets[coachId] !== undefined
         ? restoredState.budgets[coachId]
@@ -237,6 +264,7 @@ function getWinner() {
 // 獲取要傳給觀眾端的狀態，包含競標狀態、當前球員、剩餘時間、出價狀態等資訊
 function getViewerState() {
   const baseState = {
+    coaches: COACH_CONFIG,
     status: state.status,
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,
@@ -255,7 +283,10 @@ function getViewerState() {
 
 // 獲取要傳給教練端的狀態，包含競標狀態、當前球員、剩餘時間、出價狀態等資訊
 function getCoachState(coachId) {
+  const coach = COACH_CONFIG.find((item) => item.id === coachId);
+
   return {
+    coach,
     status: state.status,
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,

@@ -1,19 +1,14 @@
-const COACH_NAMES = {
-  coach1: "Coach 1",
-  coach2: "Coach 2",
-  coach3: "Coach 3",
-  coach4: "Coach 4",
-  coach5: "Coach 5",
-  coach6: "Coach 6",
-  coach7: "Coach 7",
-  coach8: "Coach 8",
-};
-
 async function fetchResults() {
   try {
-    const response = await fetch("/api/results");
-    const data = await response.json();
-    renderResults(data);
+    const [resultsResponse, coachesResponse] = await Promise.all([
+      fetch("/api/results"),
+      fetch("/api/coaches"),
+    ]);
+    const [results, coaches] = await Promise.all([
+      resultsResponse.json(),
+      coachesResponse.json(),
+    ]);
+    renderResults(results, coaches);
 
     const loadingEl = document.getElementById("loading");
     if (loadingEl) loadingEl.style.display = "none";
@@ -25,7 +20,7 @@ async function fetchResults() {
   }
 }
 
-function renderResults(results) {
+function renderResults(results, coaches) {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
@@ -33,8 +28,8 @@ function renderResults(results) {
 
   const lastRecord = results.length > 0 ? results[results.length - 1] : null;
   const teams = {};
-  Object.keys(COACH_NAMES).forEach((id) => {
-    teams[id] = [];
+  coaches.forEach((coach) => {
+    teams[coach.id] = [];
   });
 
   results.forEach((record) => {
@@ -43,7 +38,8 @@ function renderResults(results) {
     }
   });
 
-  Object.keys(COACH_NAMES).forEach((coachId) => {
+  coaches.forEach((coach) => {
+    const coachId = coach.id;
     const members = teams[coachId];
     const card = document.createElement("div");
     const isNewTeam = lastRecord && lastRecord.coachId === coachId;
@@ -51,7 +47,7 @@ function renderResults(results) {
 
     card.innerHTML = `
       <div class="coach-name">
-        <span class="coach-title">${COACH_NAMES[coachId]}</span>
+        <span class="coach-title">${coach.name}</span>
         <span class="coach-count">${members.length} 人</span>
       </div>
       <ul class="member-list">
