@@ -53,7 +53,8 @@ function saveState() {
     budgets: coachBudgets,
     history: auctionHistory,
     winner: state.winner,
-    winningAmount: state.winningAmount
+    winningAmount: state.winningAmount,
+    minimumBid: state.minimumBid
   };
 
   const tmpFile = STATE_FILE + ".tmp";
@@ -180,6 +181,46 @@ const state = {
 };
 
 // 重置所有教練的出價狀態
+state.minimumBid = 0;
+
+let lastAwardUndo = null;
+
+function undoLastAward() {
+  if (!lastAwardUndo) return false;
+
+  const latestRecord = auctionHistory[auctionHistory.length - 1];
+  if (
+    !latestRecord ||
+    latestRecord.playerName !== lastAwardUndo.playerName ||
+    latestRecord.winner !== lastAwardUndo.winner ||
+    latestRecord.amount !== lastAwardUndo.amount
+  ) {
+    lastAwardUndo = null;
+    return false;
+  }
+
+  if (auctionTimer) {
+    clearInterval(auctionTimer);
+    auctionTimer = null;
+  }
+
+  auctionHistory.pop();
+  coachBudgets[lastAwardUndo.winner] += lastAwardUndo.amount;
+
+  state.status = "ended";
+  state.currentPlayer = lastAwardUndo.playerName;
+  state.timeLeft = 0;
+  state.bids = { ...lastAwardUndo.bids };
+  state.winner = null;
+  state.winningAmount = null;
+
+  lastAwardUndo = null;
+  saveHistoryToCSV();
+  saveState();
+  broadcastState();
+  return true;
+}
+
 if (restoredState) {
   state.status = restoredState.status;
   state.currentPlayer = restoredState.currentPlayer;
@@ -193,6 +234,10 @@ if (restoredState) {
   }
   state.winner = COACHES.includes(restoredState.winner) ? restoredState.winner : null;
   state.winningAmount = state.winner ? restoredState.winningAmount : null;
+  state.minimumBid =
+    Number.isInteger(restoredState.minimumBid) && restoredState.minimumBid >= 0
+      ? restoredState.minimumBid
+      : 0;
   const restoredBids = restoredState.bids || {};
 
   for (const coachId of COACHES) {
@@ -231,7 +276,12 @@ function getWinner() {
 
   for (const [coachId, amount] of Object.entries(state.bids)) {
     // 嚴格判斷數值，處理 0 元出價比 null (無出價) 優先
-    if (amount === null || amount === undefined || typeof amount !== "number") continue;
+    if (
+      amount === null ||
+      amount === undefined ||
+      typeof amount !== "number" ||
+      amount < state.minimumBid
+    ) continue;
     
     // 檢查該隊是否已滿 5 人
     if (teamCounts[coachId] >= 5) continue;
@@ -270,6 +320,7 @@ function getViewerState() {
     timeLeft: state.timeLeft,
     winner: state.winner,
     winningAmount: state.winningAmount,
+    minimumBid: state.minimumBid,
     budgets: coachBudgets,
     history: auctionHistory, // 確保 history 隨時都有傳出去
   };
@@ -287,9 +338,12 @@ function getCoachState(coachId) {
 
   return {
     coach,
+    coaches: COACH_CONFIG,
+    budgets: coachBudgets,
     status: state.status,
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,
+    minimumBid: state.minimumBid,
     myBid: state.bids[coachId] ?? null,
     budget: coachBudgets[coachId],
     winner: state.status === "ended" ? state.winner : null,
@@ -304,6 +358,7 @@ function broadcastState() {
   io.to("admin").emit("admin_state", {
     ...getViewerState(),
     allBids: state.bids,
+    canUndo: lastAwardUndo !== null,
   });
 
   for (const coachId of COACHES) {
@@ -326,6 +381,13 @@ function endAuction() {
   state.winningAmount = result.winningAmount;
 
   if (state.winner && state.winningAmount !== null) {
+    lastAwardUndo = {
+      playerName: state.currentPlayer,
+      winner: state.winner,
+      amount: state.winningAmount,
+      bids: { ...state.bids },
+    };
+
     coachBudgets[state.winner] -= state.winningAmount;
     
     // 記錄得標結果
@@ -384,6 +446,7 @@ function startAuctionTimer() {
     state.timeLeft -= 1;
 
     if (state.timeLeft < 0) { // 修改這裡：從 <= 0 改為 < 0，這樣 0 秒時會廣播一次再結束
+      state.timeLeft = 0;
       endAuction();
       return;
     }
@@ -395,6 +458,8 @@ function startAuctionTimer() {
 
 // 開始競標，初始化狀態並啟動計時器，每秒更新剩餘時間並廣播狀態給所有客戶端
 function startAuction(playerName, duration = 90) {
+  lastAwardUndo = null;
+
   state.status = "running";
   state.currentPlayer = playerName;
   state.duration = duration;
@@ -426,9 +491,11 @@ io.on("connection", (socket) => {
   // 添加管理員房間，並發送當前狀態和所有出價資訊給管理員端
   socket.on("join_admin", () => {
     socket.join("admin");
+    socket.data.isAdmin = true;
     socket.emit("admin_state", {
       ...getViewerState(),
       allBids: state.bids,
+      canUndo: lastAwardUndo !== null,
     });
   });
 
@@ -469,6 +536,56 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("add_all_budgets", ({ amount = 100 } = {}) => {
+    if (!socket.data.isAdmin) return;
+
+    const safeAmount = Number(amount);
+    if (!Number.isInteger(safeAmount) || safeAmount <= 0) {
+      socket.emit("error_message", "預算增加額必須是正整數");
+      return;
+    }
+
+    for (const coachId of COACHES) {
+      coachBudgets[coachId] += safeAmount;
+    }
+
+    saveState();
+    broadcastState();
+  });
+
+  socket.on("set_minimum_bid", ({ amount }) => {
+    if (!socket.data.isAdmin) return;
+
+    const minimumBid = Number(amount);
+    if (!Number.isInteger(minimumBid) || minimumBid < 0) {
+      socket.emit("error_message", "底價必須是大於或等於 0 的整數");
+      return;
+    }
+
+    state.minimumBid = minimumBid;
+
+    for (const coachId of COACHES) {
+      const bid = state.bids[coachId];
+      if (typeof bid === "number" && bid < minimumBid) {
+        state.bids[coachId] = null;
+      }
+    }
+
+    saveState();
+    broadcastState();
+  });
+
+  socket.on("undo_last_award", () => {
+    if (!socket.data.isAdmin) return;
+
+    const undone = undoLastAward();
+    if (!undone) {
+      socket.emit("error_message", "沒有可以復原的操作");
+      return;
+    }
+
+  });
+
   // 處理提交出價事件，驗證輸入並更新出價狀態，然後廣播更新給所有客戶端
   socket.on("submit_bid", ({ coachId, amount }) => {
     // 如果競標未在進行中，則返回錯誤訊息
@@ -498,6 +615,11 @@ io.on("connection", (socket) => {
     }
 
     // 驗證出價金額是否超過教練剩餘預算，如果超過則返回錯誤訊息
+    if (bidAmount < state.minimumBid) {
+      socket.emit("error_message", `出價不得低於底價 ${state.minimumBid}`);
+      return;
+    }
+
     if (bidAmount > coachBudgets[coachId]) {
       socket.emit("error_message", "出價金額超過剩餘預算!");
       return;
@@ -538,6 +660,7 @@ function verifyAdminToken(req, res) {
 function resetBudgetHandler(req, res) {
   if (!verifyAdminToken(req, res)) return;
 
+  lastAwardUndo = null;
   resetBudgets();
   auctionHistory = [];
   saveState();
@@ -552,11 +675,13 @@ function resetBudgetHandler(req, res) {
 function resetAuctionHandler(req, res) {
   if (!verifyAdminToken(req, res)) return;
 
+  lastAwardUndo = null;
   state.status = "idle";
   state.currentPlayer = null;
   state.timeLeft = 0;
   state.winner = null;
   state.winningAmount = null;
+  state.minimumBid = 0;
   auctionHistory = [];
   resetBudgets();
   resetBids();

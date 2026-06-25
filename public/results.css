@@ -91,15 +91,13 @@ body {
   min-height: 0;
   padding: 12px;
   border-radius: 8px;
-  background:
-    linear-gradient(145deg, rgba(30, 64, 175, 0.14), rgba(8, 47, 73, 0.08)),
-    var(--bg-card);
+  background: transparent;
   border: 1px solid var(--line);
-  box-shadow: 0 12px 28px rgba(0, 8, 20, 0.28);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
 }
 
 .coach-card.is-latest {
@@ -140,8 +138,14 @@ body {
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-y: auto;
-  scrollbar-color: rgba(103, 232, 249, 0.45) transparent;
+  overflow: hidden;
+  scrollbar-width: none;
+  overscroll-behavior: none;
+  pointer-events: none;
+}
+
+.member-list::-webkit-scrollbar {
+  display: none;
 }
 
 .member-item {

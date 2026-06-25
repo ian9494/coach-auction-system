@@ -65,6 +65,33 @@
     <ul id="bidList"></ul>
   </section>
 
+  <section>
+    <h2>競標控制</h2>
+
+    <div class="admin-controls">
+      <div class="control-group">
+        <div class="control-title">目前底價：<span id="minimumBidText">0</span></div>
+        <div class="control-row">
+          <button type="button" class="minimum-bid-preset" data-minimum-bid="100">底價 100</button>
+          <button type="button" class="minimum-bid-preset" data-minimum-bid="200">底價 200</button>
+          <button type="button" class="minimum-bid-preset" data-minimum-bid="300">底價 300</button>
+        </div>
+        <div class="control-row">
+          <input id="minimumBidInput" type="number" min="0" step="1" value="0" />
+          <button id="setMinimumBidButton" type="button">設定底價</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">系統操作</div>
+        <div class="control-row">
+          <button id="addAllBudgetsButton" type="button">全體預算 +100</button>
+          <button id="undoButton" type="button" class="undo-button">撤銷上次得標</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="messageText"></div>
 
   <script src="/socket.io/socket.io.js"></script>

@@ -150,3 +150,43 @@ body {
 .my-team-item span {
   color: #6ea8ff;
 }
+
+.coach-budget-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.coach-budget-item {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coach-budget-item.is-me {
+  border: 1px solid rgba(110, 168, 255, 0.65);
+  background: rgba(110, 168, 255, 0.12);
+}
+
+.coach-budget-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.coach-budget-value {
+  flex: 0 0 auto;
+  color: #6ea8ff;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}

@@ -5,6 +5,12 @@ const memberButtonContainer = document.getElementById("memberButtonContainer");
 const durationInput = document.getElementById("durationInput");
 const startButton = document.getElementById("startButton");
 const endButton = document.getElementById("endButton");
+const minimumBidText = document.getElementById("minimumBidText");
+const minimumBidInput = document.getElementById("minimumBidInput");
+const setMinimumBidButton = document.getElementById("setMinimumBidButton");
+const minimumBidPresetButtons = document.querySelectorAll("[data-minimum-bid]");
+const addAllBudgetsButton = document.getElementById("addAllBudgetsButton");
+const undoButton = document.getElementById("undoButton");
 
 const statusText = document.getElementById("statusText");
 const currentPlayerText = document.getElementById("currentPlayerText");
@@ -67,6 +73,32 @@ endButton.addEventListener("click", () => {
   setMessage("已送出強制結束");
 });
 
+minimumBidPresetButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const amount = Number(button.dataset.minimumBid);
+    minimumBidInput.value = amount;
+    socket.emit("set_minimum_bid", { amount });
+  });
+});
+
+setMinimumBidButton.addEventListener("click", () => {
+  const amount = Number(minimumBidInput.value);
+  if (!Number.isInteger(amount) || amount < 0) {
+    setMessage("底價必須是大於或等於 0 的整數");
+    return;
+  }
+
+  socket.emit("set_minimum_bid", { amount });
+});
+
+addAllBudgetsButton.addEventListener("click", () => {
+  socket.emit("add_all_budgets", { amount: 100 });
+});
+
+undoButton.addEventListener("click", () => {
+  socket.emit("undo_last_award");
+});
+
 socket.on("admin_state", (state) => {
   coachNames = Object.fromEntries(
     (state.coaches || []).map((coach) => [coach.id, coach.name])
@@ -93,6 +125,16 @@ function renderState(state) {
     state.winningAmount !== null && state.winningAmount !== undefined
       ? state.winningAmount
       : "-";
+
+  const minimumBid =
+    Number.isInteger(state.minimumBid) && state.minimumBid >= 0
+      ? state.minimumBid
+      : 0;
+  minimumBidText.textContent = minimumBid;
+  if (document.activeElement !== minimumBidInput) {
+    minimumBidInput.value = minimumBid;
+  }
+  undoButton.disabled = !state.canUndo;
 
   renderBids(state.allBids || state.bids || {}, state.budgets || {});
 }

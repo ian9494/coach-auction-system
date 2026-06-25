@@ -26,6 +26,10 @@
           <p class="label">剩餘預算</p>
           <p class="value" id="budgetText">-</p>
         </div>
+        <div>
+          <p class="label">目前底價</p>
+          <p class="value" id="minimumBidText">0</p>
+        </div>
       </div>
 
       <p class="status" id="statusText">等待開始</p>
@@ -38,9 +42,12 @@
       <input id="bidInput" class="bid-input" type="number" min="0" placeholder="輸入出價金額" />
 
       <div class="quick-buttons">
+        <button type="button" data-add="10">+10</button>
         <button type="button" data-add="50">+50</button>
         <button type="button" data-add="100">+100</button>
-        <button type="button" data-add="500">+500</button>
+        <button type="button" data-add="-10">-10</button>
+        <button type="button" data-add="-50">-50</button>
+        <button type="button" data-add="-100">-100</button>
       </div>
 
       <button id="submitBtn" class="submit-btn">送出 / 修改出價</button>
@@ -51,6 +58,11 @@
       <div id="myTeamList" class="my-team-list">
         <!-- 成員將在此條列 -->
       </div>
+    </section>
+
+    <section class="card">
+      <p class="label">教練剩餘預算</p>
+      <div id="coachBudgetList" class="coach-budget-list"></div>
     </section>
 
     <p id="messageText" class="message"></p>

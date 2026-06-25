@@ -7,15 +7,19 @@ const coachTitle = document.getElementById("coachTitle");
 const playerText = document.getElementById("playerText");
 const timeText = document.getElementById("timeText");
 const budgetText = document.getElementById("budgetText");
+const minimumBidText = document.getElementById("minimumBidText");
 const statusText = document.getElementById("statusText");
 const myTeamCount = document.getElementById("myTeamCount");
 const myTeamList = document.getElementById("myTeamList");
+const coachBudgetList = document.getElementById("coachBudgetList");
 
 const myBidText = document.getElementById("myBidText");
 const bidInput = document.getElementById("bidInput");
 const submitBtn = document.getElementById("submitBtn");
 const messageText = document.getElementById("messageText");
 const quickButtons = document.querySelectorAll("[data-add]");
+let currentBudget = null;
+let currentMinimumBid = 0;
 
 coachTitle.textContent = coachId || "未指定教練";
 
@@ -30,8 +34,12 @@ socket.emit("join_coach", { coachId });
 quickButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const addValue = Number(button.dataset.add);
-    const current = Number(bidInput.value || 0);
-    bidInput.value = current + addValue;
+    const current = Number(bidInput.value || currentMinimumBid);
+    const nextValue = Math.max(0, current + addValue);
+    bidInput.value =
+      typeof currentBudget === "number"
+        ? Math.min(nextValue, currentBudget)
+        : nextValue;
   });
 });
 
@@ -40,6 +48,11 @@ submitBtn.addEventListener("click", () => {
 
   if (!Number.isInteger(amount) || amount < 0) {
     setMessage("請輸入正確金額");
+    return;
+  }
+
+  if (amount < currentMinimumBid) {
+    setMessage(`出價不得低於底價 ${currentMinimumBid}`);
     return;
   }
 
@@ -70,6 +83,14 @@ function render(state) {
 
   budgetText.textContent =
     typeof state.budget === "number" ? state.budget : "-";
+  currentBudget = typeof state.budget === "number" ? state.budget : null;
+  currentMinimumBid =
+    Number.isInteger(state.minimumBid) && state.minimumBid >= 0
+      ? state.minimumBid
+      : 0;
+  minimumBidText.textContent = currentMinimumBid;
+  bidInput.min = currentMinimumBid;
+  renderCoachBudgets(state.coaches || [], state.budgets || {});
 
   statusText.textContent = translateStatus(state.status);
 
@@ -109,6 +130,27 @@ function render(state) {
       setMessage("本輪無人出價");
     }
   }
+}
+
+function renderCoachBudgets(coaches, budgets) {
+  coachBudgetList.innerHTML = "";
+
+  coaches.forEach((coach) => {
+    const item = document.createElement("div");
+    item.className = `coach-budget-item${coach.id === coachId ? " is-me" : ""}`;
+
+    const name = document.createElement("span");
+    name.className = "coach-budget-name";
+    name.textContent = coach.name;
+
+    const budget = document.createElement("span");
+    budget.className = "coach-budget-value";
+    budget.textContent =
+      typeof budgets[coach.id] === "number" ? `$${budgets[coach.id]}` : "-";
+
+    item.append(name, budget);
+    coachBudgetList.appendChild(item);
+  });
 }
 
 function translateStatus(status) {

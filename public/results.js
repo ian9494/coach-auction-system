@@ -1,3 +1,6 @@
+let lastRenderSignature = "";
+let stopAutoScroll = [];
+
 async function fetchResults() {
   try {
     const [resultsResponse, coachesResponse] = await Promise.all([
@@ -8,7 +11,11 @@ async function fetchResults() {
       resultsResponse.json(),
       coachesResponse.json(),
     ]);
-    renderResults(results, coaches);
+    const renderSignature = JSON.stringify({ results, coaches });
+    if (renderSignature !== lastRenderSignature) {
+      lastRenderSignature = renderSignature;
+      renderResults(results, coaches);
+    }
 
     const loadingEl = document.getElementById("loading");
     if (loadingEl) loadingEl.style.display = "none";
@@ -24,6 +31,8 @@ function renderResults(results, coaches) {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
+  stopAutoScroll.forEach((stop) => stop());
+  stopAutoScroll = [];
   grid.innerHTML = "";
 
   const lastRecord = results.length > 0 ? results[results.length - 1] : null;
@@ -76,6 +85,56 @@ function renderResults(results, coaches) {
 
     grid.appendChild(card);
   });
+
+  requestAnimationFrame(() => {
+    grid.querySelectorAll(".member-list").forEach((list) => {
+      const stop = startAutoScroll(list);
+      if (stop) stopAutoScroll.push(stop);
+    });
+  });
+}
+
+function startAutoScroll(list) {
+  if (list.scrollHeight <= list.clientHeight + 1) return null;
+
+  const speed = 18;
+  const pauseDuration = 1800;
+  let direction = 1;
+  let lastTime = performance.now();
+  let pausedUntil = lastTime + pauseDuration;
+  let animationFrame = 0;
+  let stopped = false;
+
+  function animate(now) {
+    if (stopped) return;
+
+    const elapsed = Math.min(now - lastTime, 100);
+    lastTime = now;
+
+    if (now >= pausedUntil) {
+      list.scrollTop += direction * speed * (elapsed / 1000);
+
+      const maxScroll = list.scrollHeight - list.clientHeight;
+      if (list.scrollTop >= maxScroll - 1) {
+        list.scrollTop = maxScroll;
+        direction = -1;
+        pausedUntil = now + pauseDuration;
+      } else if (list.scrollTop <= 1) {
+        list.scrollTop = 0;
+        direction = 1;
+        pausedUntil = now + pauseDuration;
+      }
+    }
+
+    animationFrame = requestAnimationFrame(animate);
+  }
+
+  animationFrame = requestAnimationFrame(animate);
+
+  return () => {
+    stopped = true;
+    cancelAnimationFrame(animationFrame);
+  };
 }
 
 document.addEventListener("DOMContentLoaded", () => {

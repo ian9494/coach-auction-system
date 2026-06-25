@@ -147,3 +147,53 @@ button[id="endButton"]:hover {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   display: none;
 }
+
+.admin-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.control-group {
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.control-title {
+  margin-bottom: 12px;
+  color: #f8fafc;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.control-row button {
+  margin-right: 0;
+}
+
+#minimumBidInput {
+  max-width: 150px;
+}
+
+.undo-button {
+  background: #f59e0b;
+  color: #111827;
+}
+
+.undo-button:hover {
+  background: #d97706;
+}
+
+.undo-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
