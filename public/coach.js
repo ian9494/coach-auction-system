@@ -20,6 +20,8 @@ const messageText = document.getElementById("messageText");
 const quickButtons = document.querySelectorAll("[data-add]");
 let currentBudget = null;
 let currentMinimumBid = 0;
+let coachRoster = [];
+let latestBudgets = {};
 
 coachTitle.textContent = coachId || "未指定教練";
 
@@ -30,6 +32,20 @@ if (!coachId) {
 }
 
 socket.emit("join_coach", { coachId });
+
+fetch("/api/coaches")
+  .then((response) => {
+    if (!response.ok) throw new Error("Failed to load coaches");
+    return response.json();
+  })
+  .then((coaches) => {
+    if (!Array.isArray(coaches)) return;
+    coachRoster = coaches;
+    renderCoachBudgets(coachRoster, latestBudgets);
+  })
+  .catch(() => {
+    renderCoachBudgets(coachRoster, latestBudgets);
+  });
 
 quickButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -90,7 +106,15 @@ function render(state) {
       : 0;
   minimumBidText.textContent = currentMinimumBid;
   bidInput.min = currentMinimumBid;
-  renderCoachBudgets(state.coaches || [], state.budgets || {});
+  if (Array.isArray(state.coaches) && state.coaches.length > 0) {
+    coachRoster = state.coaches;
+  }
+  if (state.budgets && typeof state.budgets === "object") {
+    latestBudgets = state.budgets;
+  } else if (typeof state.budget === "number" && coachId) {
+    latestBudgets = { ...latestBudgets, [coachId]: state.budget };
+  }
+  renderCoachBudgets(coachRoster, latestBudgets);
 
   statusText.textContent = translateStatus(state.status);
 
@@ -135,7 +159,19 @@ function render(state) {
 function renderCoachBudgets(coaches, budgets) {
   coachBudgetList.innerHTML = "";
 
-  coaches.forEach((coach) => {
+  const roster =
+    Array.isArray(coaches) && coaches.length > 0
+      ? coaches
+      : coachId
+        ? [{ id: coachId, name: coachTitle.textContent || coachId }]
+        : [];
+
+  if (roster.length === 0) {
+    coachBudgetList.textContent = "尚未載入教練資料";
+    return;
+  }
+
+  roster.forEach((coach) => {
     const item = document.createElement("div");
     item.className = `coach-budget-item${coach.id === coachId ? " is-me" : ""}`;
 
