@@ -76,7 +76,7 @@ body {
 
 .overlay {
   position: absolute;
-  bottom: 70px; /* 留給贊助商空間 */
+  bottom: 20px;
   left: 50%;
   width: min(90vw, 1720px); /* 縮小寬度給邊框空間 */
   height: 40%;
@@ -333,22 +333,68 @@ body {
 .team-grid-container {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(320px, auto) minmax(220px, 1fr);
+  grid-template-columns: minmax(360px, 430px) 1fr;
   gap: 24px;
   align-items: center;
-  justify-content: center;
+  justify-content: stretch;
+}
+
+.winner-info-panel {
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: 8px;
+  background: rgba(15, 35, 57, 0.74);
+  border: 1px solid rgba(148, 197, 255, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.winner-coach-avatar {
+  width: 82px;
+  height: 82px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #122033;
+  border: 1px solid rgba(103, 232, 249, 0.55);
+  box-shadow: 0 0 26px rgba(96, 165, 250, 0.2);
+}
+
+.winner-text {
+  min-width: 0;
+}
+
+.winner-text .label {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.winner-text h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 36px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.winner-text h2 {
+  margin: 8px 0 0;
+  color: var(--gold);
+  font-size: 38px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px rgba(253, 230, 138, 0.24);
 }
 
 .result-info-center {
+  grid-column: 1 / -1;
   min-width: 320px;
   padding: 0 20px;
   text-align: center;
-}
-
-.result-info-center .label {
-  margin-bottom: 8px;
-  color: var(--muted);
-  font-size: 13px;
 }
 
 .result-info-center h1 {
@@ -356,7 +402,6 @@ body {
   color: #ffffff;
   font-size: 58px;
   line-height: 1;
-  white-space: nowrap;
 }
 
 .result-info-center h2 {
@@ -364,24 +409,23 @@ body {
   color: var(--gold);
   font-size: 48px;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 24px rgba(253, 230, 138, 0.24);
 }
 
-.team-column {
+.winner-member-row {
+  min-width: 0;
   min-height: 122px;
   padding: 16px;
   border-radius: 8px;
   background: rgba(15, 35, 57, 0.74);
   border: 1px solid rgba(148, 197, 255, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(84px, 1fr));
   gap: 16px;
+  align-items: center;
 }
 
 .member-mini-container {
-  width: 84px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -395,6 +439,18 @@ body {
   object-fit: cover;
   border: 1px solid rgba(103, 232, 249, 0.4);
   background: #122033;
+}
+
+.empty-slot {
+  display: grid;
+  place-items: center;
+  color: rgba(142, 167, 190, 0.5);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.member-mini-container.is-empty {
+  opacity: 0.55;
 }
 
 .member-mini-name {
@@ -461,7 +517,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .result-info-center {
-    order: -1;
+  .winner-member-row {
+    grid-template-columns: repeat(5, minmax(64px, 1fr));
   }
 }

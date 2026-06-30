@@ -4,6 +4,7 @@ const playerNameInput = document.getElementById("playerNameInput");
 const memberButtonContainer = document.getElementById("memberButtonContainer");
 const durationInput = document.getElementById("durationInput");
 const startButton = document.getElementById("startButton");
+const pauseButton = document.getElementById("pauseButton");
 const endButton = document.getElementById("endButton");
 const minimumBidText = document.getElementById("minimumBidText");
 const minimumBidInput = document.getElementById("minimumBidInput");
@@ -73,6 +74,17 @@ endButton.addEventListener("click", () => {
   setMessage("已送出強制結束");
 });
 
+pauseButton.addEventListener("click", () => {
+  if (pauseButton.dataset.status === "paused") {
+    socket.emit("resume_auction");
+    setMessage("已繼續競標");
+    return;
+  }
+
+  socket.emit("pause_auction");
+  setMessage("已暫停競標");
+});
+
 minimumBidPresetButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const amount = Number(button.dataset.minimumBid);
@@ -116,7 +128,7 @@ socket.on("error_message", (message) => {
 });
 
 function renderState(state) {
-  statusText.textContent = state.status ?? "-";
+  statusText.textContent = translateStatus(state.status);
   currentPlayerText.textContent = state.currentPlayer ?? "-";
   timeLeftText.textContent =
     typeof state.timeLeft === "number" ? `${state.timeLeft} 秒` : "-";
@@ -135,8 +147,26 @@ function renderState(state) {
     minimumBidInput.value = minimumBid;
   }
   undoButton.disabled = !state.canUndo;
+  pauseButton.dataset.status = state.status ?? "";
+  pauseButton.textContent = state.status === "paused" ? "繼續" : "暫停";
+  pauseButton.disabled = !(state.status === "running" || state.status === "paused");
 
   renderBids(state.allBids || state.bids || {}, state.budgets || {});
+}
+
+function translateStatus(status) {
+  switch (status) {
+    case "idle":
+      return "尚未開始";
+    case "running":
+      return "競標中";
+    case "paused":
+      return "已暫停";
+    case "ended":
+      return "競標結束";
+    default:
+      return "-";
+  }
 }
 
 function renderBids(bids, budgets = {}) {

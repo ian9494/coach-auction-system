@@ -130,25 +130,79 @@ body {
   font-weight: 700;
 }
 
-.my-team-list {
+.all-team-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   margin-top: 10px;
 }
 
-.my-team-item {
+.team-group {
   background: rgba(255, 255, 255, 0.05);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
-.my-team-item span {
+.team-group.is-me {
+  border: 1px solid rgba(110, 168, 255, 0.65);
+  background: rgba(110, 168, 255, 0.12);
+}
+
+.team-group-header,
+.team-member-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.team-group-header {
+  align-items: center;
+}
+
+.team-group-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.team-group-count {
+  color: #9aa4b8;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.team-member-item {
+  align-items: baseline;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.team-member-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.team-member-amount {
+  flex: 0 0 auto;
   color: #6ea8ff;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-member-empty {
+  color: #7f899d;
+  font-size: 13px;
 }
 
 .coach-budget-list {

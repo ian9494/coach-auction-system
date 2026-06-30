@@ -153,6 +153,9 @@ app.get("/api/coaches", (req, res) => {
 });
 
 const INITIAL_BUDGET = 1000; // 每位教練的初始預算
+const TEAM_SIZE = 5;
+const RESERVED_BID_PER_REMAINING_SLOT = 100;
+const MIN_SPEND_AFTER_SECOND_PLAYER = 300;
 // 儲存每位教練的預算狀態，格式為 { coachId: remainingBudget }
 const coachBudgets = {};
 
@@ -171,7 +174,7 @@ let auctionTimer = null; // 競標計時器
 
 // 競標狀態
 const state = {
-  status: "idle", // 競標狀態：idle | running | ended
+  status: "idle", // 競標狀態：idle | running | paused | ended
   currentPlayer: null, // 當前競標的球員名稱
   timeLeft: 0, // 剩餘時間（秒）
   duration: 90, // 競標總時間（秒）
@@ -265,27 +268,94 @@ if (!restoredState) {
   resetBids();
 }
 
+function getCoachPlayerCount(coachId) {
+  return auctionHistory.filter((h) => h.winner === coachId).length;
+}
+
+function getCoachSpent(coachId) {
+  return auctionHistory
+    .filter((h) => h.winner === coachId && typeof h.amount === "number")
+    .reduce((total, h) => total + h.amount, 0);
+}
+
+function getBidRules(coachId) {
+  const budget =
+    typeof coachBudgets[coachId] === "number" ? coachBudgets[coachId] : 0;
+  const playerCount = getCoachPlayerCount(coachId);
+  const remainingSlotsAfterWin = Math.max(TEAM_SIZE - playerCount - 1, 0);
+  const reserveForRemaining =
+    remainingSlotsAfterWin * RESERVED_BID_PER_REMAINING_SLOT;
+  const maxBid = Math.max(0, budget - reserveForRemaining);
+  const spentAfterWinFloor = getCoachSpent(coachId);
+  const secondPlayerMinimum =
+    playerCount === 1
+      ? MIN_SPEND_AFTER_SECOND_PLAYER + 1 - spentAfterWinFloor
+      : 0;
+
+  return {
+    playerCount,
+    minBid: Math.max(state.minimumBid, secondPlayerMinimum, 0),
+    maxBid,
+    remainingSlotsAfterWin,
+    reserveForRemaining,
+  };
+}
+
+function getBidError(coachId, bidAmount) {
+  if (!Number.isInteger(bidAmount) || bidAmount < 0) {
+    return "請輸入正確金額";
+  }
+
+  if (bidAmount < state.minimumBid) {
+    return `出價不得低於底價 ${state.minimumBid}`;
+  }
+
+  if (bidAmount > coachBudgets[coachId]) {
+    return "出價金額超過剩餘預算!";
+  }
+
+  const rules = getBidRules(coachId);
+
+  if (rules.playerCount >= TEAM_SIZE) {
+    return `你的隊伍已滿 ${TEAM_SIZE} 位，不能再出價`;
+  }
+
+  if (bidAmount < rules.minBid) {
+    return `T2 選完總花費必須大於 ${MIN_SPEND_AFTER_SECOND_PLAYER}，本次至少要出 ${rules.minBid}`;
+  }
+
+  if (bidAmount > rules.maxBid) {
+    return `出價過高，得標後剩餘 ${rules.remainingSlotsAfterWin} 位需各保留 ${RESERVED_BID_PER_REMAINING_SLOT}，最高可出 ${rules.maxBid}`;
+  }
+
+  return null;
+}
+
+function pruneInvalidBids() {
+  for (const coachId of COACHES) {
+    const bid = state.bids[coachId];
+    if (typeof bid === "number" && getBidError(coachId, bid)) {
+      state.bids[coachId] = null;
+    }
+  }
+}
+
 // 計算競標結果，找出最高出價的教練 return:得標教練ID和出價金額
 function getWinner() {
   let highestAmount = -1;
   let candidates = [];
 
   // 獲取目前各隊人數
-  const teamCounts = {};
-  COACHES.forEach(c => teamCounts[c] = auctionHistory.filter(h => h.winner === c).length);
-
   for (const [coachId, amount] of Object.entries(state.bids)) {
     // 嚴格判斷數值，處理 0 元出價比 null (無出價) 優先
     if (
       amount === null ||
       amount === undefined ||
       typeof amount !== "number" ||
-      amount < state.minimumBid
+      getBidError(coachId, amount)
     ) continue;
     
     // 檢查該隊是否已滿 5 人
-    if (teamCounts[coachId] >= 5) continue;
-
     if (amount > highestAmount) {
       highestAmount = amount;
       candidates = [coachId];
@@ -335,6 +405,7 @@ function getViewerState() {
 // 獲取要傳給教練端的狀態，包含競標狀態、當前球員、剩餘時間、出價狀態等資訊
 function getCoachState(coachId) {
   const coach = COACH_CONFIG.find((item) => item.id === coachId);
+  const bidRules = COACHES.includes(coachId) ? getBidRules(coachId) : null;
 
   return {
     coach,
@@ -344,6 +415,7 @@ function getCoachState(coachId) {
     currentPlayer: state.currentPlayer,
     timeLeft: state.timeLeft,
     minimumBid: state.minimumBid,
+    bidRules,
     myBid: state.bids[coachId] ?? null,
     budget: coachBudgets[coachId],
     winner: state.status === "ended" ? state.winner : null,
@@ -456,6 +528,30 @@ function startAuctionTimer() {
   }, 1000);
 }
 
+function pauseAuction() {
+  if (state.status !== "running") return false;
+
+  if (auctionTimer) {
+    clearInterval(auctionTimer);
+    auctionTimer = null;
+  }
+
+  state.status = "paused";
+  saveState();
+  broadcastState();
+  return true;
+}
+
+function resumeAuction() {
+  if (state.status !== "paused") return false;
+
+  state.status = "running";
+  saveState();
+  broadcastState();
+  startAuctionTimer();
+  return true;
+}
+
 // 開始競標，初始化狀態並啟動計時器，每秒更新剩餘時間並廣播狀態給所有客戶端
 function startAuction(playerName, duration = 90) {
   lastAwardUndo = null;
@@ -513,7 +609,7 @@ io.on("connection", (socket) => {
 
   // 處理開始競標事件，驗證輸入並啟動競標
   socket.on("start_auction", ({ playerName, duration }) => {
-    if (state.status === "running") {
+    if (state.status === "running" || state.status === "paused") {
       socket.emit("error_message", "已有競標正在進行中，請先結束本輪競標");
       return;
     }
@@ -531,9 +627,19 @@ io.on("connection", (socket) => {
 
   // 處理結束競標事件，驗證狀態並結束競標
   socket.on("end_auction", () => {
-    if (state.status === "running") {
+    if (state.status === "running" || state.status === "paused") {
       endAuction();
     }
+  });
+
+  socket.on("pause_auction", () => {
+    if (!socket.data.isAdmin) return;
+    pauseAuction();
+  });
+
+  socket.on("resume_auction", () => {
+    if (!socket.data.isAdmin) return;
+    resumeAuction();
   });
 
   socket.on("add_all_budgets", ({ amount = 100 } = {}) => {
@@ -564,12 +670,7 @@ io.on("connection", (socket) => {
 
     state.minimumBid = minimumBid;
 
-    for (const coachId of COACHES) {
-      const bid = state.bids[coachId];
-      if (typeof bid === "number" && bid < minimumBid) {
-        state.bids[coachId] = null;
-      }
-    }
+    pruneInvalidBids();
 
     saveState();
     broadcastState();
@@ -602,6 +703,12 @@ io.on("connection", (socket) => {
 
     const bidAmount = Number(amount);
     const ip = socket.data.ip || socket.handshake.address;
+
+    const bidError = getBidError(coachId, bidAmount);
+    if (bidError) {
+      socket.emit("error_message", bidError);
+      return;
+    }
 
     if (!canSubmitBid(coachId, ip)) {
       socket.emit("error_message", "出價過於頻繁，請稍後再試");

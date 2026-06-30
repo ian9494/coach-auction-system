@@ -77,7 +77,7 @@ function renderState(state) {
   };
 
   const displayTime = typeof state.timeLeft === "number" ? Math.max(0, state.timeLeft) : "-";
-  timeLeftText.textContent = displayTime;
+  timeLeftText.textContent = state.status === "paused" ? `${displayTime}（暫停）` : displayTime;
 
   if (state.status === "ended") {
     runningSection.classList.add("hidden");
@@ -111,11 +111,25 @@ function renderTeamGrid(history, state) {
 
   const winnerId = state.winner;
   const teamMembers = history.filter((record) => record.winner === winnerId);
-  const displayMembers = teamMembers.slice(-4).reverse();
+  const displayMembers = teamMembers.slice(0, 5);
 
-  const createMemberElement = (member) => {
+  const createMemberElement = (member, index) => {
     const container = document.createElement("div");
-    container.className = "member-mini-container";
+    container.className = `member-mini-container${member ? "" : " is-empty"}`;
+
+    if (!member) {
+      const emptySlot = document.createElement("div");
+      emptySlot.className = "team-player-mini empty-slot";
+      emptySlot.textContent = index + 1;
+
+      const emptyName = document.createElement("span");
+      emptyName.className = "member-mini-name";
+      emptyName.textContent = "-";
+
+      container.appendChild(emptySlot);
+      container.appendChild(emptyName);
+      return container;
+    }
 
     const img = document.createElement("img");
     img.className = "team-player-mini";
@@ -133,24 +147,30 @@ function renderTeamGrid(history, state) {
     return container;
   };
 
-  const leftGroup = document.createElement("div");
-  leftGroup.className = "team-column";
-  displayMembers.slice(0, 2).forEach((member) => leftGroup.appendChild(createMemberElement(member)));
-  teamGridContainer.appendChild(leftGroup);
-
-  const centerInfo = document.createElement("div");
-  centerInfo.className = "result-info-center";
-  centerInfo.innerHTML = `
-    <p class="label">得標教練</p>
-    <h1>${getCoachName(winnerId)}</h1>
-    <h2>${state.winningAmount !== null && state.winningAmount !== undefined ? `$${state.winningAmount}` : "-"}</h2>
+  const winnerInfo = document.createElement("div");
+  winnerInfo.className = "winner-info-panel";
+  winnerInfo.innerHTML = `
+    <img class="winner-coach-avatar" src="./assets/coaches/${winnerId}.png" alt="${getCoachName(winnerId)}" />
+    <div class="winner-text">
+      <p class="label">得標教練</p>
+      <h1>${getCoachName(winnerId)}</h1>
+      <h2>${state.winningAmount !== null && state.winningAmount !== undefined ? `$${state.winningAmount}` : "-"}</h2>
+    </div>
   `;
-  teamGridContainer.appendChild(centerInfo);
 
-  const rightGroup = document.createElement("div");
-  rightGroup.className = "team-column";
-  displayMembers.slice(2, 4).forEach((member) => rightGroup.appendChild(createMemberElement(member)));
-  teamGridContainer.appendChild(rightGroup);
+  const winnerAvatar = winnerInfo.querySelector(".winner-coach-avatar");
+  winnerAvatar.onerror = function () {
+    this.src = imageFallback;
+  };
+
+  const membersGroup = document.createElement("div");
+  membersGroup.className = "winner-member-row";
+  for (let index = 0; index < 5; index += 1) {
+    membersGroup.appendChild(createMemberElement(displayMembers[index], index));
+  }
+
+  teamGridContainer.appendChild(winnerInfo);
+  teamGridContainer.appendChild(membersGroup);
 }
 
 function renderCoachCards(bids, budgets, history = []) {

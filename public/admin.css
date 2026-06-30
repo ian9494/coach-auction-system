@@ -74,6 +74,21 @@ button[id="endButton"]:hover {
   background: #dc2626;
 }
 
+button[id="pauseButton"] {
+  background: #f59e0b;
+  color: #111827;
+}
+
+button[id="pauseButton"]:hover {
+  background: #d97706;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 #memberButtonContainer {
   margin-top: 15px;
   display: flex;

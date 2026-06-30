@@ -9,8 +9,7 @@ const timeText = document.getElementById("timeText");
 const budgetText = document.getElementById("budgetText");
 const minimumBidText = document.getElementById("minimumBidText");
 const statusText = document.getElementById("statusText");
-const myTeamCount = document.getElementById("myTeamCount");
-const myTeamList = document.getElementById("myTeamList");
+const allTeamList = document.getElementById("allTeamList");
 const coachBudgetList = document.getElementById("coachBudgetList");
 
 const myBidText = document.getElementById("myBidText");
@@ -20,8 +19,10 @@ const messageText = document.getElementById("messageText");
 const quickButtons = document.querySelectorAll("[data-add]");
 let currentBudget = null;
 let currentMinimumBid = 0;
+let currentMaxBid = null;
 let coachRoster = [];
 let latestBudgets = {};
+let latestHistory = [];
 
 coachTitle.textContent = coachId || "未指定教練";
 
@@ -42,9 +43,11 @@ fetch("/api/coaches")
     if (!Array.isArray(coaches)) return;
     coachRoster = coaches;
     renderCoachBudgets(coachRoster, latestBudgets);
+    renderAllCoachTeams(coachRoster, latestHistory);
   })
   .catch(() => {
     renderCoachBudgets(coachRoster, latestBudgets);
+    renderAllCoachTeams(coachRoster, latestHistory);
   });
 
 quickButtons.forEach((button) => {
@@ -53,8 +56,8 @@ quickButtons.forEach((button) => {
     const current = Number(bidInput.value || currentMinimumBid);
     const nextValue = Math.max(0, current + addValue);
     bidInput.value =
-      typeof currentBudget === "number"
-        ? Math.min(nextValue, currentBudget)
+      typeof currentMaxBid === "number"
+        ? Math.min(nextValue, currentMaxBid)
         : nextValue;
   });
 });
@@ -69,6 +72,11 @@ submitBtn.addEventListener("click", () => {
 
   if (amount < currentMinimumBid) {
     setMessage(`出價不得低於底價 ${currentMinimumBid}`);
+    return;
+  }
+
+  if (typeof currentMaxBid === "number" && amount > currentMaxBid) {
+    setMessage(`出價過高，最高可出 ${currentMaxBid}`);
     return;
   }
 
@@ -101,11 +109,26 @@ function render(state) {
     typeof state.budget === "number" ? state.budget : "-";
   currentBudget = typeof state.budget === "number" ? state.budget : null;
   currentMinimumBid =
-    Number.isInteger(state.minimumBid) && state.minimumBid >= 0
-      ? state.minimumBid
-      : 0;
+    state.bidRules &&
+    Number.isInteger(state.bidRules.minBid) &&
+    state.bidRules.minBid >= 0
+      ? state.bidRules.minBid
+      : Number.isInteger(state.minimumBid) && state.minimumBid >= 0
+        ? state.minimumBid
+        : 0;
+  currentMaxBid =
+    state.bidRules &&
+    Number.isInteger(state.bidRules.maxBid) &&
+    state.bidRules.maxBid >= 0
+      ? state.bidRules.maxBid
+      : null;
   minimumBidText.textContent = currentMinimumBid;
   bidInput.min = currentMinimumBid;
+  if (typeof currentMaxBid === "number") {
+    bidInput.max = currentMaxBid;
+  } else {
+    bidInput.removeAttribute("max");
+  }
   if (Array.isArray(state.coaches) && state.coaches.length > 0) {
     coachRoster = state.coaches;
   }
@@ -118,18 +141,10 @@ function render(state) {
 
   statusText.textContent = translateStatus(state.status);
 
-  // 更新已選名單
-  if (state.history) {
-    const myHistory = state.history.filter(h => h.winner === coachId);
-    myTeamCount.textContent = myHistory.length;
-    myTeamList.innerHTML = "";
-    myHistory.forEach(h => {
-      const div = document.createElement("div");
-      div.className = "my-team-item";
-      div.innerHTML = `${h.playerName} <span>$${h.amount}</span>`;
-      myTeamList.appendChild(div);
-    });
+  if (Array.isArray(state.history)) {
+    latestHistory = state.history;
   }
+  renderAllCoachTeams(coachRoster, latestHistory);
 
   if (state.myBid !== null && state.myBid !== undefined) {
     myBidText.textContent = state.myBid;
@@ -138,6 +153,21 @@ function render(state) {
   }
 
   const canBid = state.status === "running" && !!coachId;
+
+  if (canBid) {
+    const inputAmount = Number(bidInput.value);
+    const shouldFillMinimum =
+      bidInput.value === "" ||
+      !Number.isInteger(inputAmount) ||
+      inputAmount < currentMinimumBid;
+
+    if (shouldFillMinimum) {
+      bidInput.value =
+        typeof currentMaxBid === "number"
+          ? Math.min(currentMinimumBid, currentMaxBid)
+          : currentMinimumBid;
+    }
+  }
 
   submitBtn.disabled = !canBid;
   bidInput.disabled = !canBid;
@@ -189,12 +219,82 @@ function renderCoachBudgets(coaches, budgets) {
   });
 }
 
+function renderAllCoachTeams(coaches, history) {
+  allTeamList.innerHTML = "";
+
+  const roster =
+    Array.isArray(coaches) && coaches.length > 0
+      ? coaches
+      : coachId
+        ? [{ id: coachId, name: coachTitle.textContent || coachId }]
+        : [];
+
+  if (roster.length === 0) {
+    allTeamList.textContent = "尚未載入教練資料";
+    return;
+  }
+
+  const safeHistory = Array.isArray(history) ? history : [];
+
+  roster.forEach((coach) => {
+    const coachHistory = safeHistory.filter((record) => record.winner === coach.id);
+    const group = document.createElement("div");
+    group.className = `team-group${coach.id === coachId ? " is-me" : ""}`;
+
+    const header = document.createElement("div");
+    header.className = "team-group-header";
+
+    const name = document.createElement("span");
+    name.className = "team-group-name";
+    name.textContent = coach.name;
+
+    const count = document.createElement("span");
+    count.className = "team-group-count";
+    count.textContent = `${coachHistory.length}/5`;
+
+    header.append(name, count);
+    group.appendChild(header);
+
+    const list = document.createElement("div");
+    list.className = "team-member-list";
+
+    if (coachHistory.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "team-member-empty";
+      empty.textContent = "尚未選人";
+      list.appendChild(empty);
+    } else {
+      coachHistory.forEach((record) => {
+        const item = document.createElement("div");
+        item.className = "team-member-item";
+
+        const player = document.createElement("span");
+        player.className = "team-member-name";
+        player.textContent = record.playerName || "-";
+
+        const amount = document.createElement("span");
+        amount.className = "team-member-amount";
+        amount.textContent =
+          typeof record.amount === "number" ? `$${record.amount}` : "-";
+
+        item.append(player, amount);
+        list.appendChild(item);
+      });
+    }
+
+    group.appendChild(list);
+    allTeamList.appendChild(group);
+  });
+}
+
 function translateStatus(status) {
   switch (status) {
     case "idle":
       return "等待開始";
     case "running":
       return "競標中";
+    case "paused":
+      return "已暫停";
     case "ended":
       return "競標結束";
     default:
