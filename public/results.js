@@ -95,45 +95,43 @@ function renderResults(results, coaches) {
 }
 
 function startAutoScroll(list) {
-  if (list.scrollHeight <= list.clientHeight + 1) return null;
+  const maxScroll = () => Math.max(0, list.scrollHeight - list.clientHeight);
+  if (maxScroll() <= 1) return null;
 
-  const speed = 18;
+  list.classList.add("is-scrollable");
+
   const pauseDuration = 1800;
+  const scrollStep = () => Math.max(28, Math.floor(list.clientHeight * 0.75));
   let direction = 1;
-  let lastTime = performance.now();
-  let pausedUntil = lastTime + pauseDuration;
-  let animationFrame = 0;
+  let timer = 0;
   let stopped = false;
 
-  function animate(now) {
+  function advance() {
     if (stopped) return;
 
-    const elapsed = Math.min(now - lastTime, 100);
-    lastTime = now;
+    const limit = maxScroll();
+    if (limit <= 1) return;
 
-    if (now >= pausedUntil) {
-      list.scrollTop += direction * speed * (elapsed / 1000);
+    let nextTop = list.scrollTop + direction * scrollStep();
 
-      const maxScroll = list.scrollHeight - list.clientHeight;
-      if (list.scrollTop >= maxScroll - 1) {
-        list.scrollTop = maxScroll;
-        direction = -1;
-        pausedUntil = now + pauseDuration;
-      } else if (list.scrollTop <= 1) {
-        list.scrollTop = 0;
-        direction = 1;
-        pausedUntil = now + pauseDuration;
-      }
+    if (nextTop >= limit) {
+      nextTop = limit;
+      direction = -1;
+    } else if (nextTop <= 0) {
+      nextTop = 0;
+      direction = 1;
     }
 
-    animationFrame = requestAnimationFrame(animate);
+    list.scrollTo({ top: nextTop, behavior: "smooth" });
   }
 
-  animationFrame = requestAnimationFrame(animate);
+  timer = setInterval(advance, pauseDuration);
+  setTimeout(advance, 600);
 
   return () => {
     stopped = true;
-    cancelAnimationFrame(animationFrame);
+    clearInterval(timer);
+    list.classList.remove("is-scrollable");
   };
 }
 
