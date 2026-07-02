@@ -83,8 +83,8 @@ body {
 }
 
 .coach-name {
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
   border-bottom: 1px solid rgba(148, 197, 255, 0.14);
   display: flex;
   align-items: baseline;
@@ -95,7 +95,7 @@ body {
 .coach-title {
   min-width: 0;
   color: #f8fbff;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 950;
   white-space: nowrap;
   overflow: hidden;
@@ -105,7 +105,7 @@ body {
 .coach-count {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -115,8 +115,9 @@ body {
   margin: 0;
   padding: 0;
   list-style: none;
+  display: grid;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   overflow: hidden;
-  scroll-behavior: smooth;
   scrollbar-width: none;
   overscroll-behavior: none;
   pointer-events: none;
@@ -127,16 +128,17 @@ body {
 }
 
 .member-item {
-  min-height: 30px;
-  padding: 6px 0;
+  min-height: 0;
+  padding: 1px 0;
   border-bottom: 1px solid rgba(148, 197, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 750;
+  line-height: 1.05;
 }
 
 .member-item:last-child {
@@ -153,7 +155,7 @@ body {
 .member-price {
   flex: 0 0 auto;
   color: var(--cyan);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -163,8 +165,8 @@ body {
 }
 
 .new-member {
-  margin: 4px 0;
-  padding: 6px 8px;
+  margin: 0;
+  padding: 1px 5px;
   border-radius: 8px;
   border: 1px solid rgba(94, 234, 212, 0.4);
   background: rgba(94, 234, 212, 0.12);
@@ -173,12 +175,12 @@ body {
 
 .new-member .member-name::before {
   content: "NEW";
-  margin-right: 8px;
-  padding: 2px 5px;
+  margin-right: 4px;
+  padding: 1px 3px;
   border-radius: 4px;
   background: rgba(103, 232, 249, 0.18);
   color: var(--cyan);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 950;
   vertical-align: 1px;
 }

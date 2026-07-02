@@ -1,5 +1,4 @@
 let lastRenderSignature = "";
-let stopAutoScroll = [];
 
 async function fetchResults() {
   try {
@@ -31,8 +30,6 @@ function renderResults(results, coaches) {
   const grid = document.getElementById("grid");
   if (!grid) return;
 
-  stopAutoScroll.forEach((stop) => stop());
-  stopAutoScroll = [];
   grid.innerHTML = "";
 
   const lastRecord = results.length > 0 ? results[results.length - 1] : null;
@@ -85,54 +82,6 @@ function renderResults(results, coaches) {
 
     grid.appendChild(card);
   });
-
-  requestAnimationFrame(() => {
-    grid.querySelectorAll(".member-list").forEach((list) => {
-      const stop = startAutoScroll(list);
-      if (stop) stopAutoScroll.push(stop);
-    });
-  });
-}
-
-function startAutoScroll(list) {
-  const maxScroll = () => Math.max(0, list.scrollHeight - list.clientHeight);
-  if (maxScroll() <= 1) return null;
-
-  list.classList.add("is-scrollable");
-
-  const pauseDuration = 1800;
-  const scrollStep = () => Math.max(28, Math.floor(list.clientHeight * 0.75));
-  let direction = 1;
-  let timer = 0;
-  let stopped = false;
-
-  function advance() {
-    if (stopped) return;
-
-    const limit = maxScroll();
-    if (limit <= 1) return;
-
-    let nextTop = list.scrollTop + direction * scrollStep();
-
-    if (nextTop >= limit) {
-      nextTop = limit;
-      direction = -1;
-    } else if (nextTop <= 0) {
-      nextTop = 0;
-      direction = 1;
-    }
-
-    list.scrollTo({ top: nextTop, behavior: "smooth" });
-  }
-
-  timer = setInterval(advance, pauseDuration);
-  setTimeout(advance, 600);
-
-  return () => {
-    stopped = true;
-    clearInterval(timer);
-    list.classList.remove("is-scrollable");
-  };
 }
 
 document.addEventListener("DOMContentLoaded", () => {
