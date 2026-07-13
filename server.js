@@ -403,6 +403,21 @@ function pruneInvalidBids() {
 }
 
 // 計算競標結果，找出最高出價的教練 return:得標教練ID和出價金額
+function applyAutoMinimumBids() {
+  for (const coachId of COACHES) {
+    const rules = getBidRules(coachId);
+    const autoBidAmount = rules.minBid;
+
+    if (
+      Number.isInteger(autoBidAmount) &&
+      autoBidAmount <= rules.maxBid &&
+      !getBidError(coachId, autoBidAmount)
+    ) {
+      state.bids[coachId] = autoBidAmount;
+    }
+  }
+}
+
 function getWinner() {
   let highestAmount = -1;
   let candidates = [];
@@ -625,6 +640,7 @@ function startAuction(playerName, duration = 90) {
   state.winner = null;
   state.winningAmount = null;
   resetBids();
+  applyAutoMinimumBids();
 
   saveState();
   broadcastState();
