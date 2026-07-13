@@ -153,9 +153,26 @@ app.get("/api/coaches", (req, res) => {
 });
 
 const INITIAL_BUDGET = 1000; // 每位教練的初始預算
+function loadMemberNames() {
+  const filePath = path.join(__dirname, "data", "member.csv");
+  return fs
+    .readFileSync(filePath, "utf8")
+    .replace(/^\uFEFF/, "")
+    .split(/[\n\r,]+/)
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+}
+
 const TEAM_SIZE = 5;
 const RESERVED_BID_PER_REMAINING_SLOT = 100;
 const MIN_SPEND_AFTER_SECOND_PLAYER = 300;
+const MAX_BID_AMOUNT = 500;
+const PLAYER_ZONE_CONFIG = [
+  { id: 1, size: 8, coachLimit: 1 },
+  { id: 2, size: 8, coachLimit: 1 },
+  { id: 3, size: 24, coachLimit: 3 },
+];
+const MEMBER_NAMES = loadMemberNames();
 // 儲存每位教練的預算狀態，格式為 { coachId: remainingBudget }
 const coachBudgets = {};
 
@@ -278,14 +295,51 @@ function getCoachSpent(coachId) {
     .reduce((total, h) => total + h.amount, 0);
 }
 
+function getPlayerZone(playerName) {
+  if (!playerName) return null;
+
+  const memberIndex = MEMBER_NAMES.indexOf(playerName);
+  if (memberIndex < 0) return null;
+
+  let zoneStart = 0;
+  for (const zone of PLAYER_ZONE_CONFIG) {
+    const zoneEnd = zoneStart + zone.size;
+    if (memberIndex >= zoneStart && memberIndex < zoneEnd) {
+      return zone;
+    }
+    zoneStart = zoneEnd;
+  }
+
+  return null;
+}
+
+function getCoachZonePlayerCount(coachId, zoneId) {
+  if (!zoneId) return 0;
+
+  return auctionHistory.filter((record) => {
+    if (record.winner !== coachId) return false;
+    const recordZone = getPlayerZone(record.playerName);
+    return recordZone && recordZone.id === zoneId;
+  }).length;
+}
+
 function getBidRules(coachId) {
   const budget =
     typeof coachBudgets[coachId] === "number" ? coachBudgets[coachId] : 0;
   const playerCount = getCoachPlayerCount(coachId);
+  const playerZone = getPlayerZone(state.currentPlayer);
+  const zonePlayerCount = playerZone
+    ? getCoachZonePlayerCount(coachId, playerZone.id)
+    : 0;
+  const zoneLimitReached =
+    playerZone !== null && zonePlayerCount >= playerZone.coachLimit;
   const remainingSlotsAfterWin = Math.max(TEAM_SIZE - playerCount - 1, 0);
   const reserveForRemaining =
     remainingSlotsAfterWin * RESERVED_BID_PER_REMAINING_SLOT;
-  const maxBid = Math.max(0, budget - reserveForRemaining);
+  const maxBid = Math.min(
+    MAX_BID_AMOUNT,
+    Math.max(0, budget - reserveForRemaining)
+  );
   const spentAfterWinFloor = getCoachSpent(coachId);
   const secondPlayerMinimum =
     playerCount === 1
@@ -295,7 +349,11 @@ function getBidRules(coachId) {
   return {
     playerCount,
     minBid: Math.max(state.minimumBid, secondPlayerMinimum, 0),
-    maxBid,
+    maxBid: zoneLimitReached ? 0 : maxBid,
+    playerZone,
+    zonePlayerCount,
+    zoneLimit: playerZone ? playerZone.coachLimit : null,
+    zoneLimitReached,
     remainingSlotsAfterWin,
     reserveForRemaining,
   };
@@ -315,6 +373,10 @@ function getBidError(coachId, bidAmount) {
   }
 
   const rules = getBidRules(coachId);
+
+  if (rules.zoneLimitReached) {
+    return `第 ${rules.playerZone.id} 區已選滿，每位教練此區最多 ${rules.zoneLimit} 位`;
+  }
 
   if (rules.playerCount >= TEAM_SIZE) {
     return `你的隊伍已滿 ${TEAM_SIZE} 位，不能再出價`;

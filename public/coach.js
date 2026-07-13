@@ -20,6 +20,7 @@ const quickButtons = document.querySelectorAll("[data-add]");
 let currentBudget = null;
 let currentMinimumBid = 0;
 let currentMaxBid = null;
+let currentZoneLimitReached = false;
 let coachRoster = [];
 let latestBudgets = {};
 let latestHistory = [];
@@ -80,6 +81,11 @@ submitBtn.addEventListener("click", () => {
     return;
   }
 
+  if (currentZoneLimitReached) {
+    setMessage("此區已達可選人數上限");
+    return;
+  }
+
   socket.emit("submit_bid", {
     coachId,
     amount,
@@ -122,6 +128,9 @@ function render(state) {
     state.bidRules.maxBid >= 0
       ? state.bidRules.maxBid
       : null;
+  currentZoneLimitReached = !!(
+    state.bidRules && state.bidRules.zoneLimitReached
+  );
   minimumBidText.textContent = currentMinimumBid;
   bidInput.min = currentMinimumBid;
   if (typeof currentMaxBid === "number") {
@@ -152,7 +161,11 @@ function render(state) {
     myBidText.textContent = "尚未出價";
   }
 
-  const canBid = state.status === "running" && !!coachId;
+  const canBid =
+    state.status === "running" &&
+    !!coachId &&
+    !currentZoneLimitReached &&
+    (typeof currentMaxBid !== "number" || currentMaxBid >= currentMinimumBid);
 
   if (canBid) {
     const inputAmount = Number(bidInput.value);
