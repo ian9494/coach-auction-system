@@ -76,11 +76,11 @@ body {
 
 .overlay {
   position: absolute;
-  bottom: 20px;
+  bottom: 4px;
   left: 50%;
   width: min(90vw, 1720px); /* 縮小寬度給邊框空間 */
-  height: 40%;
-  padding: 14px 0 20px;
+  height: 46%;
+  padding: 14px 0 4px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
