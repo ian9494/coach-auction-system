@@ -65,11 +65,11 @@ function buildGrid() {
                 <div class="c-names">
                   <div class="c-zh">${coach.name}</div>
                 </div>
-                <div class="roster">隊員 <b class="num" id="roster${index}">0</b> 位</div>
               </div>
               <div class="c-bid">
                 <span class="amt num" id="amount${index}">尚未出價</span>
                 <span class="tag" id="tag${index}"></span>
+                <span class="roster">隊員 <b class="num" id="roster${index}">0</b> 位</span>
               </div>
             </div>
           </div>

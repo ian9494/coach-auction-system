@@ -151,14 +151,14 @@ body{
   overflow:hidden;
 }
 .c-info{min-width:0;flex:1;align-self:stretch}
-.c-heading{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.c-heading{min-width:0;display:block}
 .c-names{min-width:0;flex:1}
 .c-zh{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.roster{font-size:11px;color:var(--text-2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;padding:2px 8px;flex:none}
+.roster{margin-left:auto;font-size:11px;color:var(--text-2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;padding:2px 8px;flex:none}
 
 .c-bid{height:26px;display:flex;align-items:baseline;gap:8px;margin-top:8px}
 .c-bid .amt{font-size:22px;font-weight:700;color:var(--text)}
-.c-bid .tag{font-size:11px;letter-spacing:.08em}
+.c-bid .tag{min-width:0;font-size:11px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cap[data-state="idle"] .c-bid .amt{font-size:14px;font-weight:400;color:var(--muted)}
 .cap[data-state="lead"] .c-bid .amt{color:var(--cyan)}
 .cap[data-state="lead"] .c-bid .tag{color:var(--cyan)}
