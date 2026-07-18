@@ -217,6 +217,34 @@ body{
 }
 .demo-bar button:hover{background:rgba(125,211,252,.16)}
 
+/* OBS 底板模式：固定美術由 OBS 下層提供，這一層只輸出動態資訊。 */
+.obs-underlay .console{background:none}
+.obs-underlay .hero{
+  background:transparent;border-color:transparent;box-shadow:none;
+}
+.obs-underlay .p-ava{
+  background:transparent;box-shadow:none;
+}
+.obs-underlay .leader-chip{
+  background:transparent;border-color:transparent;
+}
+.obs-underlay .stamp{
+  background:transparent;backdrop-filter:none;
+}
+.obs-underlay .cap,
+.obs-underlay .cap:hover,
+.obs-underlay .cap[data-state="lead"]{
+  background:transparent;border-color:transparent;box-shadow:none;
+}
+.obs-underlay .c-ava,
+.obs-underlay .cap[data-state="lead"] .c-ava{
+  background:transparent;border-color:transparent;
+}
+.obs-underlay .roster{
+  background:transparent;border-color:transparent;
+}
+.obs-underlay .b-track{background:transparent}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important;transition:none !important}
 }
@@ -228,7 +256,7 @@ body{
 }
 </style>
 </head>
-<body>
+<body class="obs-underlay">
 <div class="stage">
 
   <div class="feed-zone">
