@@ -20,8 +20,7 @@ function getCoachName(coachId) {
 }
 
 function getCoachImage(coachId) {
-  const coachIndex = coaches.findIndex((coach) => coach.id === coachId);
-  return coachIndex >= 0 ? `./assets/coaches/coach${coachIndex + 1}.png` : imageFallback;
+  return `./assets/coaches/${coachId}.png`;
 }
 
 function getTeamSize(history, coachId) {
