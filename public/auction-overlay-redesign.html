@@ -69,21 +69,28 @@ body{
 .p-name{font-size:clamp(22px,2vw,30px);font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-en{font-size:13px;color:var(--text-2);letter-spacing:.12em;margin-top:2px}
 
-.bid-block{text-align:center}
-.bid-label{font-size:12px;letter-spacing:.28em;color:var(--text-2);margin-bottom:2px}
+.bid-block{
+  min-width:0;height:84px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;
+}
+.bid-label{font-size:10px;line-height:1.1;letter-spacing:.22em;color:var(--text-2);margin-bottom:1px}
 .bid-amt{
-  font-size:clamp(40px,4.2vw,64px);font-weight:700;line-height:1;
+  max-width:100%;font-size:clamp(28px,2.8vw,44px);font-weight:700;line-height:.9;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(135deg,var(--cyan),var(--purple));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
 .bid-amt.pop{animation:pop .35s ease}
 @keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
-.bid-meta{margin-top:6px;font-size:13px;color:var(--text-2);display:flex;gap:14px;justify-content:center;align-items:center}
+.bid-meta{
+  width:100%;min-width:0;margin-top:3px;font-size:11px;line-height:1.2;color:var(--text-2);
+  display:flex;gap:8px;justify-content:center;align-items:center;white-space:nowrap;
+}
 .leader-chip{
-  display:inline-flex;align-items:center;gap:6px;
+  min-width:0;max-width:70%;display:inline-block;overflow:hidden;text-overflow:ellipsis;
   background:rgba(125,211,252,.10);color:var(--cyan);
   border:1px solid rgba(125,211,252,.35);border-radius:999px;
-  padding:3px 12px;font-size:13px;font-weight:500;
+  padding:2px 9px;font-size:11px;font-weight:500;
 }
 
 /* Timer */

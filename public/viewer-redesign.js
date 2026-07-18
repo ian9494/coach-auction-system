@@ -28,7 +28,9 @@ function getTeamSize(history, coachId) {
 }
 
 function getBidSummary(bids = {}) {
-  const entries = Object.entries(bids).filter(([, amount]) => Number.isFinite(amount));
+  const entries = Object.entries(bids).filter(
+    ([, amount]) => Number.isFinite(amount) && amount > 0,
+  );
   if (!entries.length) return { highest: null, leaders: [] };
 
   const highest = Math.max(...entries.map(([, amount]) => amount));
@@ -106,7 +108,10 @@ function renderHero(state, bidSummary) {
   const chip = $("leadChip");
   if (bidSummary.leaders.length) {
     chip.style.visibility = "visible";
-    chip.textContent = `領先 · ${bidSummary.leaders.map(getCoachName).join(" / ")}`;
+    chip.textContent =
+      bidSummary.leaders.length > 2
+        ? `領先 · ${bidSummary.leaders.length} 位教練並列`
+        : `領先 · ${bidSummary.leaders.map(getCoachName).join(" / ")}`;
   } else {
     chip.style.visibility = "hidden";
   }
@@ -135,7 +140,7 @@ function renderCards(state, bidSummary) {
   coaches.forEach((coach, index) => {
     const card = document.querySelector(`[data-coach-id="${coach.id}"]`);
     const bid = state.bids?.[coach.id];
-    const hasBid = Number.isFinite(bid);
+    const hasBid = Number.isFinite(bid) && bid > 0;
     const isLeader = hasBid && bid === bidSummary.highest;
     const budget = Number.isFinite(state.budgets?.[coach.id]) ? state.budgets[coach.id] : 0;
 
@@ -150,6 +155,7 @@ function renderCards(state, bidSummary) {
 
 function updateTicker(state) {
   for (const [coachId, amount] of Object.entries(state.bids || {})) {
+    if (!Number.isFinite(amount) || amount <= 0) continue;
     if (previousBids[coachId] === amount) continue;
     const entry = document.createElement("span");
     entry.className = "entry";
