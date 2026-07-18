@@ -77,6 +77,20 @@ body {
   backdrop-filter: none;
 }
 
+.results-colored .coach-card {
+  background: var(--bg-card);
+  border-color: var(--line);
+  box-shadow: 0 12px 28px rgba(0, 8, 20, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.results-transparent .coach-card {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
 .coach-card.is-latest {
   border-color: var(--line-strong);
   box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.08), 0 16px 36px rgba(8, 145, 178, 0.2);

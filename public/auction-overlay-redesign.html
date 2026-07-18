@@ -257,6 +257,11 @@ body{
 </style>
 </head>
 <body class="obs-underlay">
+<script>
+  if (new URLSearchParams(window.location.search).get("background") === "colored") {
+    document.body.classList.remove("obs-underlay");
+  }
+</script>
 <div class="stage">
 
   <div class="feed-zone">

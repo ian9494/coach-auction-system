@@ -6,7 +6,12 @@
   <title>競標結果 - Coach Auction System</title>
   <link rel="stylesheet" href="./results.css" />
 </head>
-<body>
+<body class="results-transparent">
+  <script>
+    if (new URLSearchParams(window.location.search).get("background") === "colored") {
+      document.body.classList.replace("results-transparent", "results-colored");
+    }
+  </script>
   <!-- 活動 Logo 預留空間 -->
   <div class="event-logo-container">
     <span style="color: rgba(255,255,255,0.3); font-size: 14px;">EVENT LOGO</span>
