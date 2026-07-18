@@ -37,7 +37,7 @@ body{
 
 /* ── 競標主控台 ── */
 .console{
-  width:min(90vw,1720px);height:366px;flex:0 0 366px;margin:0 auto;
+  width:min(90vw,1720px);height:356px;flex:0 0 356px;margin:0 auto;
   padding:14px 0 4px;display:flex;flex-direction:column;
   background:linear-gradient(180deg, rgba(13,17,23,0) 0%, rgba(13,17,23,.9) 18%, var(--bg) 45%);
 }
@@ -134,7 +134,7 @@ body{
 /* 隊長卡片 */
 .grid{
   flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  grid-template-rows:repeat(2,minmax(0,1fr));gap:14px;
+  grid-template-rows:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:4px;
 }
 .cap{
   position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;
