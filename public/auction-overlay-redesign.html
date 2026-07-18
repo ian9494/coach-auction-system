@@ -142,20 +142,21 @@ body{
   transition:border-color .15s, background .15s, opacity .3s, box-shadow .3s;
 }
 .cap:hover{background:var(--card-hover);border-color:rgba(125,211,252,.35)}
-.cap .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.cap .top{height:72px;display:flex;align-items:center;gap:14px;margin-bottom:8px}
 .c-ava{
-  width:38px;height:38px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:16px;color:var(--cyan);
+  width:72px;height:72px;flex:0 0 72px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:24px;color:var(--cyan);
   background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.25);
   transition:all .2s;
   overflow:hidden;
 }
+.c-info{min-width:0;flex:1;align-self:stretch}
+.c-heading{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .c-names{min-width:0;flex:1}
-.c-zh{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-en{font-size:11px;color:var(--text-2);letter-spacing:.1em}
+.c-zh{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .roster{font-size:11px;color:var(--text-2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;padding:2px 8px;flex:none}
 
-.c-bid{height:30px;display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.c-bid{height:26px;display:flex;align-items:baseline;gap:8px;margin-top:8px}
 .c-bid .amt{font-size:22px;font-weight:700;color:var(--text)}
 .c-bid .tag{font-size:11px;letter-spacing:.08em}
 .cap[data-state="idle"] .c-bid .amt{font-size:14px;font-weight:400;color:var(--muted)}

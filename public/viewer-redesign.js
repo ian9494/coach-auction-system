@@ -20,7 +20,8 @@ function getCoachName(coachId) {
 }
 
 function getCoachImage(coachId) {
-  return `./assets/coaches/${coachId}.png`;
+  const coachIndex = coaches.findIndex((coach) => coach.id === coachId);
+  return coachIndex >= 0 ? `./assets/coaches/coach${coachIndex + 1}.png` : imageFallback;
 }
 
 function getTeamSize(history, coachId) {
@@ -60,15 +61,18 @@ function buildGrid() {
           <div class="lead-badge">領先</div>
           <div class="top">
             <div class="c-ava" id="coachAvatar${index}"></div>
-            <div class="c-names">
-              <div class="c-zh">${coach.name}</div>
-              <div class="c-en">${coach.id.toUpperCase()}</div>
+            <div class="c-info">
+              <div class="c-heading">
+                <div class="c-names">
+                  <div class="c-zh">${coach.name}</div>
+                </div>
+                <div class="roster">隊員 <b class="num" id="roster${index}">0</b> 位</div>
+              </div>
+              <div class="c-bid">
+                <span class="amt num" id="amount${index}">尚未出價</span>
+                <span class="tag" id="tag${index}"></span>
+              </div>
             </div>
-            <div class="roster">隊員 <b class="num" id="roster${index}">0</b> 位</div>
-          </div>
-          <div class="c-bid">
-            <span class="amt num" id="amount${index}">尚未出價</span>
-            <span class="tag" id="tag${index}"></span>
           </div>
           <div class="budget">
             <div class="b-row"><span>剩餘預算</span><b class="num" id="budget${index}">$0</b></div>
