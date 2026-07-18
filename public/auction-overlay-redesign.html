@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viewer - Coach Auction System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117; --card:#161b22; --card-hover:#1c2128;
+  --border:#30363d; --border-light:#3d444d;
+  --cyan:#7dd3fc; --purple:#c4b5fd; --pink:#f9a8d4;
+  --green:#86efac; --amber:#fcd34d; --red:#fca5a5;
+  --text:#e6edf3; --text-2:#8b949e; --muted:#6e7681;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:transparent; color:var(--text); overflow:hidden;
+  font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+}
+.num{font-family:'Rajdhani','Noto Sans TC',sans-serif;font-variant-numeric:tabular-nums}
+
+.stage{height:100vh;display:flex;flex-direction:column}
+
+/* ── 上方透明區（OBS 疊遊戲畫面用） ── */
+.feed-zone{
+  flex:1; position:relative; display:flex;align-items:center;justify-content:center;
+  background:transparent;
+}
+.feed-zone span{
+  color:var(--muted); font-size:13px; letter-spacing:.35em; padding-left:.35em;
+  border:1px dashed var(--border); border-radius:8px; padding:10px 22px;
+}
+
+/* ── 競標主控台 ── */
+.console{
+  padding:0 28px 20px;
+  background:linear-gradient(180deg, rgba(13,17,23,0) 0%, rgba(13,17,23,.9) 18%, var(--bg) 45%);
+}
+
+/* Hero */
+.hero{
+  position:relative; display:grid; grid-template-columns:minmax(260px,1.1fr) 1.6fr auto;
+  gap:20px; align-items:center;
+  background:linear-gradient(#12161f,#12161f) padding-box,
+             linear-gradient(135deg, rgba(125,211,252,.55), rgba(196,181,253,.55)) border-box;
+  border:1px solid transparent; border-radius:16px;
+  padding:16px 24px; margin-bottom:14px;
+  box-shadow:0 0 34px rgba(125,211,252,.10);
+}
+.eyebrow{font-size:12px;letter-spacing:.3em;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.p-plate{display:flex;align-items:center;gap:16px;min-width:0}
+.p-ava{
+  width:64px;height:64px;flex:none;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:#0d1117;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  box-shadow:0 0 22px rgba(125,211,252,.3);
+  overflow:hidden;
+}
+.p-ava img,.c-ava img{width:100%;height:100%;object-fit:cover}
+.p-name{font-size:clamp(22px,2vw,30px);font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-en{font-size:13px;color:var(--text-2);letter-spacing:.12em;margin-top:2px}
+
+.bid-block{text-align:center}
+.bid-label{font-size:12px;letter-spacing:.28em;color:var(--text-2);margin-bottom:2px}
+.bid-amt{
+  font-size:clamp(40px,4.2vw,64px);font-weight:700;line-height:1;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.bid-amt.pop{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
+.bid-meta{margin-top:6px;font-size:13px;color:var(--text-2);display:flex;gap:14px;justify-content:center;align-items:center}
+.leader-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(125,211,252,.10);color:var(--cyan);
+  border:1px solid rgba(125,211,252,.35);border-radius:999px;
+  padding:3px 12px;font-size:13px;font-weight:500;
+}
+
+/* Timer */
+.timer{display:flex;align-items:center;gap:14px}
+.t-ring{position:relative;width:88px;height:88px;flex:none}
+.t-ring svg{transform:rotate(-90deg)}
+.t-ring .track{stroke:var(--border)}
+.t-ring .bar{stroke:var(--cyan);transition:stroke-dashoffset 1s linear, stroke .3s}
+.t-num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:36px;font-weight:700;color:var(--cyan);transition:color .3s;
+}
+.timer .t-label{font-size:12px;letter-spacing:.28em;color:var(--text-2);writing-mode:vertical-rl}
+.timer.warn .bar{stroke:var(--amber)} .timer.warn .t-num{color:var(--amber)}
+.timer.crit .bar{stroke:var(--red)} .timer.crit .t-num{color:var(--red);animation:pulse 1s infinite}
+.extend-tag{
+  position:absolute;top:-10px;right:-6px;font-size:11px;font-weight:700;color:#0d1117;
+  background:var(--amber);border-radius:999px;padding:2px 8px;opacity:0;transform:translateY(4px);
+  transition:opacity .25s, transform .25s;
+}
+.extend-tag.show{opacity:1;transform:translateY(0)}
+
+/* SOLD 印章 */
+.stamp{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  border-radius:16px;background:rgba(13,17,23,.72);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.stamp.show{opacity:1}
+.stamp .word{
+  font-size:clamp(38px,3.6vw,56px);font-weight:700;letter-spacing:.35em;padding-left:.35em;
+  border:3px solid var(--green);color:var(--green);border-radius:12px;padding:8px 30px 8px 42px;
+  transform:rotate(-6deg) scale(1.6);opacity:0;
+  box-shadow:0 0 34px rgba(134,239,172,.35), inset 0 0 22px rgba(134,239,172,.12);
+}
+.stamp.show .word{animation:slam .4s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes slam{to{transform:rotate(-6deg) scale(1);opacity:1}}
+.stamp .word.fail{border-color:var(--muted);color:var(--muted);box-shadow:none}
+.stamp .sub{position:absolute;bottom:16px;font-size:14px;color:var(--text-2)}
+
+/* 隊長卡片 */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cap{
+  position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:12px 14px;cursor:pointer;transition:border-color .15s, background .15s, opacity .3s, box-shadow .3s;
+}
+.cap:hover{background:var(--card-hover);border-color:rgba(125,211,252,.35)}
+.cap .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.c-ava{
+  width:38px;height:38px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:16px;color:var(--cyan);
+  background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.25);
+  transition:all .2s;
+  overflow:hidden;
+}
+.c-names{min-width:0;flex:1}
+.c-zh{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-en{font-size:11px;color:var(--text-2);letter-spacing:.1em}
+.roster{font-size:11px;color:var(--text-2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;padding:2px 8px;flex:none}
+
+.c-bid{height:30px;display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.c-bid .amt{font-size:22px;font-weight:700;color:var(--text)}
+.c-bid .tag{font-size:11px;letter-spacing:.08em}
+.cap[data-state="idle"] .c-bid .amt{font-size:14px;font-weight:400;color:var(--muted)}
+.cap[data-state="lead"] .c-bid .amt{color:var(--cyan)}
+.cap[data-state="lead"] .c-bid .tag{color:var(--cyan)}
+.cap[data-state="out"] .c-bid .amt{color:var(--muted)}
+.cap[data-state="out"] .c-bid .tag{color:var(--muted)}
+.cap[data-state="pass"] .c-bid .amt{color:var(--muted);font-size:14px;font-weight:400}
+.cap[data-state="pass"] .c-bid .tag{color:var(--red)}
+
+.cap[data-state="lead"]{
+  background:linear-gradient(#151b26,#151b26) padding-box,
+             linear-gradient(135deg,var(--cyan),var(--purple)) border-box;
+  border:1px solid transparent;
+  box-shadow:0 0 22px rgba(125,211,252,.22);
+}
+.cap[data-state="lead"] .c-ava{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#0d1117;border-color:transparent}
+.cap[data-state="pass"]{opacity:.45}
+.cap.won{animation:wonflash 1.2s ease}
+@keyframes wonflash{
+  0%{box-shadow:0 0 0 rgba(134,239,172,0)}
+  25%{box-shadow:0 0 34px rgba(134,239,172,.5);border-color:var(--green)}
+  100%{box-shadow:0 0 0 rgba(134,239,172,0)}
+}
+.lead-badge{
+  position:absolute;top:-9px;right:12px;font-size:11px;font-weight:700;letter-spacing:.15em;
+  color:#0d1117;background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border-radius:999px;padding:2px 10px;opacity:0;transform:translateY(3px);transition:all .2s;
+}
+.cap[data-state="lead"] .lead-badge{opacity:1;transform:translateY(0)}
+
+.budget .b-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-bottom:4px}
+.budget .b-row b{color:var(--text);font-weight:500}
+.b-track{height:5px;background:var(--border);border-radius:999px;overflow:hidden}
+.b-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .5s ease}
+
+/* Ticker */
+.ticker{
+  margin-top:12px;display:flex;align-items:center;gap:10px;overflow:hidden;
+  font-size:12.5px;color:var(--text-2);white-space:nowrap;
+}
+.ticker .t-tag{flex:none;color:var(--purple);letter-spacing:.2em;font-size:11px;border-right:1px solid var(--border);padding-right:10px}
+.ticker .entry{flex:none;opacity:0;animation:tin .3s ease forwards}
+.ticker .entry b{color:var(--text);font-weight:500}
+.ticker .entry.hit b{color:var(--green)}
+.ticker .sep{color:var(--border);flex:none}
+@keyframes tin{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+
+/* Demo 控制 */
+.demo-bar{
+  position:absolute;top:14px;right:20px;display:none;align-items:center;gap:10px;
+  font-size:12px;color:var(--muted);
+}
+.demo-bar button{
+  font-family:inherit;font-size:12px;color:var(--cyan);cursor:pointer;
+  background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.3);
+  border-radius:8px;padding:5px 14px;transition:background .15s;
+}
+.demo-bar button:hover{background:rgba(125,211,252,.16)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+}
+@media (max-width:1100px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .hero{grid-template-columns:1fr;text-align:center}
+  .p-plate{justify-content:center}
+  .timer{justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="feed-zone">
+    <span aria-hidden="true"></span>
+    <div class="demo-bar">
+      <span>示範模式 — 點擊隊長卡片可手動出價</span>
+      <button id="toggle">暫停</button>
+    </div>
+  </div>
+
+  <div class="console">
+
+    <div class="hero">
+      <div class="p-plate">
+        <div class="p-ava" id="pAva">豪</div>
+        <div style="min-width:0">
+          <div class="eyebrow"><span class="dot"></span>競標中</div>
+          <div class="p-name" id="pName">阿豪</div>
+          <div class="p-en" id="pEn">A-HAO · 底價 $100</div>
+        </div>
+      </div>
+
+      <div class="bid-block">
+        <div class="bid-label">目前最高出價</div>
+        <div class="bid-amt num" id="bidAmt">—</div>
+        <div class="bid-meta">
+          <span class="leader-chip" id="leadChip" style="visibility:hidden">領先 · —</span>
+          <span>最低加價 <b class="num" style="color:var(--text)">$50</b></span>
+        </div>
+      </div>
+
+      <div class="timer" id="timerBox">
+        <div class="t-label">剩餘時間</div>
+        <div class="t-ring">
+          <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+            <circle class="track" cx="44" cy="44" r="39" stroke-width="6"/>
+            <circle class="bar" id="tBar" cx="44" cy="44" r="39" stroke-width="6"
+              stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="0"/>
+          </svg>
+          <div class="t-num num" id="tNum">15</div>
+          <div class="extend-tag" id="extTag">+延長</div>
+        </div>
+      </div>
+
+      <div class="stamp" id="stamp">
+        <div class="word num" id="stampWord">成交</div>
+        <div class="sub" id="stampSub"></div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="ticker">
+      <span class="t-tag">出價紀錄</span>
+      <span id="tickerBody" style="display:flex;gap:10px;align-items:center"></span>
+    </div>
+
+  </div>
+</div>
+
+<script type="application/x-prototype-disabled">
+const captains = [
+  {zh:'肯特', en:'KANT'}, {zh:'乖兒子', en:'GOODSON'},
+  {zh:'許摸摸', en:'KMOMO'}, {zh:'虧皮', en:'KRAPY'},
+  {zh:'Idoce', en:'IDOCE'}, {zh:'9QOQ', en:'9QOQ'},
+  {zh:'宗瑋', en:'JONGWEI'}, {zh:'小三登', en:'XSDENG'}
+].map(c => ({...c, budget:1000, roster:0, bid:0, passed:false, cap:0}));
+
+const players = [
+  {zh:'阿豪', en:'A-HAO'}, {zh:'小魚', en:'FISH'}, {zh:'老K', en:'OLD-K'},
+  {zh:'喵喵', en:'MEOW'}, {zh:'阿哲', en:'JER'}, {zh:'大熊', en:'BEAR'}
+];
+
+const BASE = 100, INC = 50, ROUND_T = 15;
+let pi = 0, price = 0, leader = -1, t = ROUND_T, running = true, resolving = false;
+let tickTimer = null, bidTimer = null;
+
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + n.toLocaleString();
+
+function buildGrid(){
+  $('grid').innerHTML = captains.map((c,i)=>`
+    <div class="cap" data-i="${i}" data-state="idle">
+      <div class="lead-badge">領先</div>
+      <div class="top">
+        <div class="c-ava">${c.zh[0]}</div>
+        <div class="c-names">
+          <div class="c-zh">${c.zh}</div>
+          <div class="c-en">${c.en}</div>
+        </div>
+        <div class="roster">已選 <b class="num" id="r${i}">0</b> 人</div>
+      </div>
+      <div class="c-bid">
+        <span class="amt num" id="a${i}">尚未出價</span>
+        <span class="tag" id="g${i}"></span>
+      </div>
+      <div class="budget">
+        <div class="b-row"><span>剩餘預算</span><b class="num" id="b${i}">$1,000</b></div>
+        <div class="b-track"><div class="b-fill" id="f${i}" style="width:100%"></div></div>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.cap').forEach(el=>{
+    el.addEventListener('click', ()=> manualBid(+el.dataset.i));
+  });
+}
+
+function renderCaptain(i){
+  const c = captains[i], el = document.querySelector(`.cap[data-i="${i}"]`);
+  let state = 'idle', amt = '尚未出價', tag = '';
+  if (c.passed){ state='pass'; amt='—'; tag='已跳過'; }
+  else if (i === leader){ state='lead'; amt=fmt(c.bid); tag='最高價'; }
+  else if (c.bid > 0){ state='out'; amt=fmt(c.bid); tag='已被超越'; }
+  el.dataset.state = state;
+  $('a'+i).textContent = amt;
+  $('g'+i).textContent = tag;
+  $('b'+i).textContent = fmt(c.budget);
+  $('f'+i).style.width = (c.budget/1000*100) + '%';
+  $('r'+i).textContent = c.roster;
+}
+
+function renderHero(){
+  const p = players[pi % players.length];
+  $('pAva').textContent = p.zh[0];
+  $('pName').textContent = p.zh;
+  $('pEn').textContent = p.en + ' · 底價 ' + fmt(BASE);
+  if (price > 0){
+    $('bidAmt').textContent = fmt(price);
+    $('leadChip').style.visibility = 'visible';
+    $('leadChip').textContent = '領先 · ' + captains[leader].zh;
+  } else {
+    $('bidAmt').textContent = '—';
+    $('leadChip').style.visibility = 'hidden';
+  }
+}
+
+function renderTimer(){
+  $('tNum').textContent = t;
+  $('tBar').style.strokeDashoffset = 245 * (1 - t/ROUND_T);
+  const box = $('timerBox');
+  box.classList.toggle('warn', t <= 9 && t > 5);
+  box.classList.toggle('crit', t <= 5);
+}
+
+function ticker(html, hit){
+  const body = $('tickerBody');
+  const e = document.createElement('span');
+  e.className = 'entry' + (hit ? ' hit' : '');
+  e.innerHTML = html;
+  const sep = document.createElement('span');
+  sep.className = 'sep'; sep.textContent = '/';
+  body.prepend(sep); body.prepend(e);
+  while (body.children.length > 10) body.lastChild.remove();
+}
+
+function placeBid(i){
+  const next = price === 0 ? BASE : price + INC;
+  const c = captains[i];
+  if (c.passed || c.budget < next || i === leader) return false;
+  price = next; leader = i; c.bid = next;
+  captains.forEach((_,j)=> renderCaptain(j));
+  renderHero();
+  const amt = $('bidAmt');
+  amt.classList.remove('pop'); void amt.offsetWidth; amt.classList.add('pop');
+  ticker(`<b>${c.zh}</b> 出價 <b class="num">${fmt(next)}</b>`);
+  if (t < 8){
+    t = 8; renderTimer();
+    const tag = $('extTag'); tag.classList.add('show');
+    setTimeout(()=> tag.classList.remove('show'), 900);
+  }
+  return true;
+}
+
+function manualBid(i){
+  if (!running || resolving) return;
+  captains[i].passed = false;
+  captains[i].cap = Math.max(captains[i].cap, price + INC * 3);
+  placeBid(i);
+}
+
+function autoBid(){
+  if (!running || resolving) return;
+  const next = price === 0 ? BASE : price + INC;
+  const eager = captains
+    .map((c,i)=>({c,i}))
+    .filter(x => !x.c.passed && x.i !== leader && x.c.budget >= next);
+  eager.forEach(x => { if (x.c.cap < next && Math.random() < .5){ x.c.passed = true; renderCaptain(x.i); } });
+  const live = eager.filter(x => !x.c.passed && x.c.cap >= next);
+  if (live.length && Math.random() < .8){
+    placeBid(live[Math.floor(Math.random()*live.length)].i);
+  }
+  bidTimer = setTimeout(autoBid, 700 + Math.random()*1400);
+}
+
+function resolveRound(){
+  resolving = true;
+  clearTimeout(bidTimer);
+  const p = players[pi % players.length];
+  const stamp = $('stamp'), word = $('stampWord');
+  if (leader >= 0){
+    const w = captains[leader];
+    w.budget -= price; w.roster += 1;
+    word.textContent = '成交'; word.classList.remove('fail');
+    $('stampSub').textContent = `${w.zh} 以 ${fmt(price)} 簽下 ${p.zh}`;
+    ticker(`<b>${w.zh}</b> 以 <b class="num">${fmt(price)}</b> 簽下 <b>${p.zh}</b>`, true);
+    const card = document.querySelector(`.cap[data-i="${leader}"]`);
+    card.classList.add('won'); setTimeout(()=> card.classList.remove('won'), 1300);
+    renderCaptain(leader);
+  } else {
+    word.textContent = '流標'; word.classList.add('fail');
+    $('stampSub').textContent = `${p.zh} 無人出價`;
+    ticker(`<b>${p.zh}</b> 流標`);
+  }
+  stamp.classList.add('show');
+  setTimeout(()=>{ stamp.classList.remove('show'); nextRound(); }, 2600);
+}
+
+function nextRound(){
+  pi += 1; price = 0; leader = -1; t = ROUND_T; resolving = false;
+  captains.forEach((c,i)=>{
+    c.bid = 0; c.passed = false;
+    c.cap = BASE + Math.floor(Math.random()*7) * INC + (c.budget > 600 ? INC*2 : 0);
+    c.cap = Math.min(c.cap, c.budget);
+    renderCaptain(i);
+  });
+  renderHero(); renderTimer();
+  if (running) bidTimer = setTimeout(autoBid, 900);
+}
+
+function tick(){
+  if (!running || resolving) return;
+  t -= 1;
+  if (t <= 0){ t = 0; renderTimer(); resolveRound(); return; }
+  renderTimer();
+}
+
+$('toggle').addEventListener('click', ()=>{
+  running = !running;
+  $('toggle').textContent = running ? '暫停' : '播放';
+  if (running && !resolving) bidTimer = setTimeout(autoBid, 500);
+  else clearTimeout(bidTimer);
+});
+
+buildGrid();
+pi = -1;
+nextRound();
+tickTimer = setInterval(tick, 1000);
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="./viewer-redesign.js"></script>
+</body>
+</html>
