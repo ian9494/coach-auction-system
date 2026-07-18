@@ -31,13 +31,14 @@ body{
   background:transparent;
 }
 .feed-zone span{
-  color:var(--muted); font-size:13px; letter-spacing:.35em; padding-left:.35em;
+  display:none;color:var(--muted); font-size:13px; letter-spacing:.35em; padding-left:.35em;
   border:1px dashed var(--border); border-radius:8px; padding:10px 22px;
 }
 
 /* ── 競標主控台 ── */
 .console{
-  padding:0 28px 20px;
+  width:min(90vw,1720px);height:432px;flex:0 0 432px;margin:0 auto;
+  padding:14px 0 20px;display:flex;flex-direction:column;
   background:linear-gradient(180deg, rgba(13,17,23,0) 0%, rgba(13,17,23,.9) 18%, var(--bg) 45%);
 }
 
@@ -48,7 +49,7 @@ body{
   background:linear-gradient(#12161f,#12161f) padding-box,
              linear-gradient(135deg, rgba(125,211,252,.55), rgba(196,181,253,.55)) border-box;
   border:1px solid transparent; border-radius:16px;
-  padding:16px 24px; margin-bottom:14px;
+  height:102px;flex:0 0 102px;padding:8px 18px;margin-bottom:14px;
   box-shadow:0 0 34px rgba(125,211,252,.10);
 }
 .eyebrow{font-size:12px;letter-spacing:.3em;color:var(--cyan);display:flex;align-items:center;gap:8px}
@@ -87,13 +88,13 @@ body{
 
 /* Timer */
 .timer{display:flex;align-items:center;gap:14px}
-.t-ring{position:relative;width:88px;height:88px;flex:none}
-.t-ring svg{transform:rotate(-90deg)}
+.t-ring{position:relative;width:72px;height:72px;flex:none}
+.t-ring svg{width:72px;height:72px;transform:rotate(-90deg)}
 .t-ring .track{stroke:var(--border)}
 .t-ring .bar{stroke:var(--cyan);transition:stroke-dashoffset 1s linear, stroke .3s}
 .t-num{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:36px;font-weight:700;color:var(--cyan);transition:color .3s;
+  font-size:30px;font-weight:700;color:var(--cyan);transition:color .3s;
 }
 .timer .t-label{font-size:12px;letter-spacing:.28em;color:var(--text-2);writing-mode:vertical-rl}
 .timer.warn .bar{stroke:var(--amber)} .timer.warn .t-num{color:var(--amber)}
@@ -124,10 +125,14 @@ body{
 .stamp .sub{position:absolute;bottom:16px;font-size:14px;color:var(--text-2)}
 
 /* 隊長卡片 */
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid{
+  flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(0,1fr));gap:14px;
+}
 .cap{
   position:relative;background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:12px 14px;cursor:pointer;transition:border-color .15s, background .15s, opacity .3s, box-shadow .3s;
+  min-width:0;min-height:0;padding:10px 14px;cursor:pointer;
+  transition:border-color .15s, background .15s, opacity .3s, box-shadow .3s;
 }
 .cap:hover{background:var(--card-hover);border-color:rgba(125,211,252,.35)}
 .cap .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
@@ -182,7 +187,7 @@ body{
 
 /* Ticker */
 .ticker{
-  margin-top:12px;display:flex;align-items:center;gap:10px;overflow:hidden;
+  margin-top:12px;display:none;align-items:center;gap:10px;overflow:hidden;
   font-size:12.5px;color:var(--text-2);white-space:nowrap;
 }
 .ticker .t-tag{flex:none;color:var(--purple);letter-spacing:.2em;font-size:11px;border-right:1px solid var(--border);padding-right:10px}
