@@ -37,7 +37,7 @@ body{
 
 /* ── 競標主控台 ── */
 .console{
-  width:min(90vw,1720px);height:426px;flex:0 0 426px;margin:0 auto;
+  width:min(90vw,1720px);height:376px;flex:0 0 376px;margin:0 auto;
   padding:14px 0 4px;display:flex;flex-direction:column;
   background:linear-gradient(180deg, rgba(13,17,23,0) 0%, rgba(13,17,23,.9) 18%, var(--bg) 45%);
 }
@@ -143,7 +143,7 @@ body{
   transition:border-color .15s, background .15s, opacity .3s, box-shadow .3s;
 }
 .cap:hover{background:var(--card-hover);border-color:rgba(125,211,252,.35)}
-.cap .top{height:72px;display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.cap .top{height:72px;display:flex;align-items:center;gap:14px;margin-bottom:4px}
 .c-ava{
   width:72px;height:72px;flex:0 0 72px;border-radius:12px;display:flex;align-items:center;justify-content:center;
   font-weight:700;font-size:24px;color:var(--cyan);
@@ -189,7 +189,7 @@ body{
 }
 .cap[data-state="lead"] .lead-badge{opacity:1;transform:translateY(0)}
 
-.budget{margin-top:auto}
+.budget{margin-top:0}
 .budget .b-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-bottom:4px}
 .budget .b-row b{color:var(--text);font-weight:500}
 .b-track{height:5px;background:var(--border);border-radius:999px;overflow:hidden}
