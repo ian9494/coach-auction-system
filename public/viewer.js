@@ -17,6 +17,28 @@ const rosterMemberList = document.getElementById("rosterMemberList");
 const teamGridContainer = document.getElementById("teamGridContainer");
 const imageFallback =
   "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+const imageExtensions = ["jpg", "jpeg", "png"];
+
+function getAssetImages(folder, name) {
+  const encodedName = encodeURIComponent(name);
+  return imageExtensions.map((extension) => `./assets/${folder}/${encodedName}.${extension}`);
+}
+
+function loadAssetImage(img, folder, name, onFailure) {
+  const candidates = getAssetImages(folder, name);
+  let candidateIndex = 0;
+
+  img.onerror = function () {
+    candidateIndex += 1;
+    if (candidateIndex < candidates.length) {
+      this.src = candidates[candidateIndex];
+      return;
+    }
+    this.onerror = null;
+    onFailure.call(this);
+  };
+  img.src = candidates[candidateIndex];
+}
 
 let lastStatus = "idle";
 
@@ -66,15 +88,14 @@ function renderState(state) {
   currentPlayerText.textContent = state.currentPlayer ?? "-";
 
   if (state.currentPlayer) {
-    currentPlayerAvatar.src = `./assets/players/${state.currentPlayer}.jpg`;
+    loadAssetImage(currentPlayerAvatar, "players", state.currentPlayer, function () {
+      this.src = imageFallback;
+    });
     currentPlayerAvatar.style.display = "block";
   } else {
     currentPlayerAvatar.src = imageFallback;
+    currentPlayerAvatar.onerror = null;
   }
-
-  currentPlayerAvatar.onerror = function () {
-    this.src = imageFallback;
-  };
 
   const displayTime = typeof state.timeLeft === "number" ? Math.max(0, state.timeLeft) : "-";
   timeLeftText.textContent = state.status === "paused" ? `${displayTime}（暫停）` : displayTime;
@@ -133,10 +154,9 @@ function renderTeamGrid(history, state) {
 
     const img = document.createElement("img");
     img.className = "team-player-mini";
-    img.src = `./assets/players/${member.playerName}.jpg`;
-    img.onerror = function () {
+    loadAssetImage(img, "players", member.playerName, function () {
       this.src = imageFallback;
-    };
+    });
 
     const nameTag = document.createElement("span");
     nameTag.className = "member-mini-name";
@@ -150,7 +170,7 @@ function renderTeamGrid(history, state) {
   const winnerInfo = document.createElement("div");
   winnerInfo.className = "winner-info-panel";
   winnerInfo.innerHTML = `
-    <img class="winner-coach-avatar" src="./assets/coaches/${winnerId}.png" alt="${getCoachName(winnerId)}" />
+    <img class="winner-coach-avatar" alt="${getCoachName(winnerId)}" />
     <div class="winner-text">
       <p class="label">得標教練</p>
       <h1>${getCoachName(winnerId)}</h1>
@@ -159,9 +179,9 @@ function renderTeamGrid(history, state) {
   `;
 
   const winnerAvatar = winnerInfo.querySelector(".winner-coach-avatar");
-  winnerAvatar.onerror = function () {
+  loadAssetImage(winnerAvatar, "coaches", winnerId, function () {
     this.src = imageFallback;
-  };
+  });
 
   const membersGroup = document.createElement("div");
   membersGroup.className = "winner-member-row";
@@ -190,7 +210,7 @@ function renderCoachCards(bids, budgets, history = []) {
     const memberDots = teamMembers.map(() => '<div class="member-dot"></div>').join("");
 
     card.innerHTML = `
-      <img class="coach-avatar" src="./assets/coaches/${coachId}.png" alt="${coachName}" />
+      <img class="coach-avatar" alt="${coachName}" />
       <div>
         <p class="coach-name">${coachName}</p>
         <p class="bid-value${hasBid ? "" : " no-bid"}">${hasBid ? `$${amount}` : "尚未出價"}</p>
@@ -200,13 +220,13 @@ function renderCoachCards(bids, budgets, history = []) {
     `;
 
     const coachAvatar = card.querySelector(".coach-avatar");
-    coachAvatar.onerror = function () {
+    loadAssetImage(coachAvatar, "coaches", coachId, function () {
       const fallback = document.createElement("div");
       fallback.className = "coach-avatar-fallback";
       fallback.setAttribute("aria-hidden", "true");
       fallback.textContent = coachName.replace("Coach ", "C");
       this.replaceWith(fallback);
-    };
+    });
 
     runningSection.appendChild(card);
   }

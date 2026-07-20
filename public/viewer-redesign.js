@@ -4,6 +4,7 @@ const INITIAL_BUDGET = 1000;
 const RING_LENGTH = 245;
 const imageFallback =
   "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+const imageExtensions = ["jpg", "jpeg", "png"];
 
 let coaches = [];
 let currentPlayer = null;
@@ -19,8 +20,9 @@ function getCoachName(coachId) {
   return coaches.find((coach) => coach.id === coachId)?.name ?? coachId;
 }
 
-function getCoachImage(coachId) {
-  return `./assets/coaches/${coachId}.png`;
+function getAssetImages(folder, name) {
+  const encodedName = encodeURIComponent(name);
+  return imageExtensions.map((extension) => `./assets/${folder}/${encodedName}.${extension}`);
 }
 
 function getTeamSize(history, coachId) {
@@ -40,15 +42,22 @@ function getBidSummary(bids = {}) {
   };
 }
 
-function setImage(container, src, fallbackText) {
+function setImage(container, sources, fallbackText) {
   container.replaceChildren();
   const img = document.createElement("img");
-  img.src = src;
   img.alt = fallbackText;
+  const candidates = Array.isArray(sources) ? sources : [sources];
+  let candidateIndex = 0;
   img.onerror = () => {
+    candidateIndex += 1;
+    if (candidateIndex < candidates.length) {
+      img.src = candidates[candidateIndex];
+      return;
+    }
     img.remove();
     container.textContent = fallbackText.slice(0, 1) || "-";
   };
+  img.src = candidates[candidateIndex];
   container.appendChild(img);
 }
 
@@ -82,7 +91,7 @@ function buildGrid() {
     .join("");
 
   coaches.forEach((coach, index) => {
-    setImage($("coachAvatar" + index), getCoachImage(coach.id), coach.name);
+    setImage($("coachAvatar" + index), getAssetImages("coaches", coach.id), coach.name);
   });
 }
 
@@ -94,7 +103,7 @@ function renderHero(state, bidSummary) {
     displayedPlayer = state.currentPlayer;
     setImage(
       $("pAva"),
-      state.currentPlayer ? `./assets/players/${state.currentPlayer}.jpg` : imageFallback,
+      state.currentPlayer ? getAssetImages("players", state.currentPlayer) : imageFallback,
       playerName,
     );
   }
