@@ -196,9 +196,7 @@ function renderResult(state) {
 
   word.classList.toggle("fail", !state.winner);
   word.textContent = state.winner ? "得標" : "流標";
-  $("stampSub").textContent = state.winner
-    ? `${getCoachName(state.winner)} 以 ${formatAmount(state.winningAmount)} 得標 ${state.currentPlayer}`
-    : `${state.currentPlayer || "本輪選手"} 無人出價`;
+  $("stampSub").textContent = "";
   stamp.classList.add("show");
 
   if (isNewResult && state.winner) {
