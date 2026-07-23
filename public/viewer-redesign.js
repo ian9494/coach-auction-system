@@ -122,8 +122,8 @@ function renderHero(state, bidSummary) {
     chip.style.visibility = "visible";
     chip.textContent =
       bidSummary.leaders.length > 2
-        ? `領先 · ${bidSummary.leaders.length} 位教練並列`
-        : `領先 · ${bidSummary.leaders.map(getCoachName).join(" / ")}`;
+        ? `${bidSummary.leaders.length} 位教練並列`
+        : bidSummary.leaders.map(getCoachName).join(" / ");
   } else {
     chip.style.visibility = "hidden";
   }

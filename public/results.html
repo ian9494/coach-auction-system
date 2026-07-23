@@ -8,8 +8,19 @@
 </head>
 <body class="results-transparent">
   <script>
-    if (new URLSearchParams(window.location.search).get("background") === "colored") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("background") === "colored") {
       document.body.classList.replace("results-transparent", "results-colored");
+    }
+    // ?fill=80  → 框底色透明度 80%（0-100，預設 80）
+    const fill = parseFloat(params.get("fill"));
+    if (!Number.isNaN(fill)) {
+      document.documentElement.style.setProperty("--fill-op", Math.min(Math.max(fill, 0), 100) / 100);
+    }
+    // ?font=1.3 → 字體放大 1.3 倍（預設 1）
+    const font = parseFloat(params.get("font"));
+    if (!Number.isNaN(font) && font > 0) {
+      document.documentElement.style.setProperty("--fs", font);
     }
   </script>
   <!-- 活動 Logo 預留空間 -->
