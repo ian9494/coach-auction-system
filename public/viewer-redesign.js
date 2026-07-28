@@ -109,7 +109,15 @@ function renderHero(state, bidSummary) {
   }
 
   const amount = $("bidAmt");
-  const nextAmount = bidSummary.highest === null ? "尚未出價" : formatAmount(bidSummary.highest);
+  amount.dataset.result = state.status === "ended" ? (state.winner ? "winner" : "failed") : "";
+  const nextAmount =
+    state.status === "ended" && state.winner
+      ? `得標：${getCoachName(state.winner)}`
+      : state.status === "ended"
+        ? "本輪流標"
+        : bidSummary.highest === null
+          ? "尚未出價"
+          : formatAmount(bidSummary.highest);
   if (amount.textContent !== nextAmount) {
     amount.textContent = nextAmount;
     amount.classList.remove("pop");
@@ -118,7 +126,13 @@ function renderHero(state, bidSummary) {
   }
 
   const chip = $("leadChip");
-  if (bidSummary.leaders.length) {
+  if (state.status === "ended" && state.winner) {
+    chip.style.visibility = "visible";
+    chip.textContent =
+      state.winningAmount !== null && state.winningAmount !== undefined
+        ? formatAmount(state.winningAmount)
+        : "得標";
+  } else if (bidSummary.leaders.length) {
     chip.style.visibility = "visible";
     chip.textContent =
       bidSummary.leaders.length > 2
@@ -196,7 +210,9 @@ function renderResult(state) {
 
   word.classList.toggle("fail", !state.winner);
   word.textContent = state.winner ? "得標" : "流標";
-  $("stampSub").textContent = "";
+  $("stampSub").textContent = state.winner
+    ? `${getCoachName(state.winner)} ${state.winningAmount !== null && state.winningAmount !== undefined ? formatAmount(state.winningAmount) : ""}`
+    : "本輪無人出價";
   stamp.classList.add("show");
 
   if (isNewResult && state.winner) {
