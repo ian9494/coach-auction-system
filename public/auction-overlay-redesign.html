@@ -137,7 +137,11 @@ body{
 .stamp.show .word{animation:slam .4s cubic-bezier(.2,1.4,.4,1) forwards}
 @keyframes slam{to{transform:rotate(-6deg) scale(1);opacity:1}}
 .stamp .word.fail{border-color:var(--muted);color:var(--muted);box-shadow:none}
-.stamp .sub{position:absolute;bottom:16px;font-size:14px;color:var(--text-2)}
+.stamp .sub{
+  position:absolute;bottom:12px;max-width:90%;font-size:clamp(18px,1.6vw,26px);
+  font-weight:700;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.stamp .word.fail + .sub{color:var(--text-2)}
 
 /* 隊長卡片 */
 .grid{
