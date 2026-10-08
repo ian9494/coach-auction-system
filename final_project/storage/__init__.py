@@ -1,1 +1,1 @@
-"""Reserved for isolated persistence; no database creation in Phase 0."""
+"""Explicitly initialized SQLite persistence in isolated project paths."""

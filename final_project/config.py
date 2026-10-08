@@ -19,6 +19,8 @@ class ProjectConfig:
     sqlite_file: str = "runtime/final_project/auction.sqlite3"
     coach_file: str = "examples/final_project/coach.csv"
     member_file: str = "examples/final_project/member.csv"
+    # Explicit test isolation root; never read from the example JSON.
+    project_root: Path = PROJECT_ROOT
 
     def __post_init__(self) -> None:
         if type(self.port) is not int or not 1 <= self.port <= 65535 or self.port == 3000:
@@ -35,9 +37,12 @@ class ProjectConfig:
     def path(self, relative: str) -> Path:
         if not isinstance(relative, str) or Path(relative).is_absolute() or ".." in Path(relative).parts:
             raise ValueError("Project paths must be relative without parent traversal")
-        resolved = (PROJECT_ROOT / relative).resolve()
-        if not resolved.is_relative_to(PROJECT_ROOT):
+        root = self.project_root.resolve()
+        resolved = (root / relative).resolve()
+        if not resolved.is_relative_to(root):
             raise ValueError("Project path escapes this checkout")
+        if resolved.is_relative_to((root / "data").resolve()):
+            raise ValueError("Final project paths must never target production data")
         return resolved
 
     def _within(self, relative: str, allowed: str, *, allow_equal: bool = False) -> None:
@@ -57,4 +62,6 @@ Unknown fields are rejected by the dataclass constructor. No .env auto-loading.
     values = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     if not isinstance(values, dict):
         raise ValueError("Configuration must be a JSON object")
+    if "project_root" in values:
+        raise ValueError("project_root is only an explicit test constructor option")
     return ProjectConfig(**values)

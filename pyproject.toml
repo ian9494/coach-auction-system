@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "coach-auction-final-project"
 version = "0.0.1"
-description = "Isolated university project skeleton; no server or domain implementation yet"
+description = "Isolated auction domain, serialized service and SQLite persistence"
 requires-python = ">=3.11"
 dependencies = []
 
@@ -18,3 +18,4 @@ include = ["final_project*"]
 # Network and GUI dependencies will be chosen and pinned in later phases.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--basetemp=.pytest_cache/tmp"

@@ -1,1 +1,1 @@
-"""Reserved for the Python server; no network listeners in Phase 0."""
+"""Serialized auction service and timers; no transport or network listeners."""

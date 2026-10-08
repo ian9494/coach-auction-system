@@ -38,3 +38,6 @@ fixture adapter 屬測試層，負責 legacy camelCase JSON 與 Python typed mod
 transport、角色 auth、room projections、ACK / request ID、命令順序、實際 deadline、restart、reset、SQLite / CSV 均留到 Phase 2。
 Python domain 沒有 server listener、GUI、持久化 I/O 或 network side effects。
 課程 raw TCP requirement 尚未確認；預設仍可使用 python-socketio，必要時 Phase 2 增加 TCP adapter。
+
+Phase 2A 已在 domain 之外加入序列化 AuctionService、deadline / restart、durable request ACK 與 SQLite，見 [FINAL_PROJECT_SERVICE.md](FINAL_PROJECT_SERVICE.md)。
+transport、auth、role projections、reset / CSV、GUI 仍未實作；原 Phase 1 domain 與 parity tests 保持不變。
