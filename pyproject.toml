@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coach-auction-final-project"
+version = "0.0.1"
+description = "Isolated university project skeleton; no server or domain implementation yet"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[tool.setuptools.packages.find]
+include = ["final_project*"]
+
+# Network and GUI dependencies will be chosen and pinned in later phases.
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,1162 @@
+{
+  "schema_version": 1,
+  "purpose": "DEMO / TEST ONLY; no production files",
+  "roster": {
+    "coach_file": "examples/final_project/coach.csv",
+    "member_file": "examples/final_project/member.csv",
+    "path_base": "repository_root"
+  },
+  "contract": {
+    "initial": "Full logical state injected by adapter; no disk or network side effects. Missing bid keys mean no bid. lastAwardUndo is injected runtime state, not a legacy JSON field.",
+    "steps": "Operations are harness-neutral semantic names, not an implemented Python API. validate_bid does not mutate; submit_bid checks running and replaces only a valid amount. select_winner selects without deducting budget. start_auction resets bids then applies automatic minimum bids. pause/resume do not advance clock.",
+    "expected": "Partial recursive assertions; only provided fields are checked. For bids/budgets, provided keys are checked; history arrays must match length and records (record fields are partial). error_category is a harness normalization of Node error messages, not a current Node wire code. candidates is derived in insertion order.",
+    "rng_values": "Inject Math.random-style values [0,1); use floor(value * candidate_count). Python adapter must use the same deterministic selection mapping.",
+    "safety": "Never execute original server entrypoint against data/. Phase 1 adapter must stub persistence, clock, network and inject demo roster.",
+    "legacy_defects": "Not parity requirements; see docs/FINAL_PROJECT_RULES_BASELINE.md."
+  },
+  "cases": [
+    {
+      "id": "legal_bid",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "valid": true,
+        "minBid": 0,
+        "maxBid": 500
+      }
+    },
+    {
+      "id": "below_minimum",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 100,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 99
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "below_minimum"
+      }
+    },
+    {
+      "id": "above_500",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 501
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "above_rule_max"
+      }
+    },
+    {
+      "id": "budget_insufficient",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 200,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 201
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "above_budget"
+      }
+    },
+    {
+      "id": "reserve_exceeded",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 700,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 301
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "above_rule_max",
+        "maxBid": 300,
+        "reserveForRemaining": 400
+      }
+    },
+    {
+      "id": "second_player_total_300_rejected",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 900,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player01",
+            "winner": "coach01",
+            "amount": 100
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "second_player_minimum",
+        "minBid": 201
+      }
+    },
+    {
+      "id": "second_player_total_301_accepted",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 900,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player01",
+            "winner": "coach01",
+            "amount": 100
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 201
+          }
+        }
+      ],
+      "expected": {
+        "valid": true,
+        "minBid": 201
+      }
+    },
+    {
+      "id": "zone_1_limit",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player02",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 800,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player01",
+            "winner": "coach01",
+            "amount": 200
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "zone_limit",
+        "zoneLimitReached": true,
+        "maxBid": 0
+      }
+    },
+    {
+      "id": "zone_2_limit",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player10",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 800,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player09",
+            "winner": "coach01",
+            "amount": 200
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "zone_limit",
+        "zoneLimitReached": true,
+        "maxBid": 0
+      }
+    },
+    {
+      "id": "zone_3_limit",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player20",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 550,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player17",
+            "winner": "coach01",
+            "amount": 100
+          },
+          {
+            "playerName": "Player18",
+            "winner": "coach01",
+            "amount": 250
+          },
+          {
+            "playerName": "Player19",
+            "winner": "coach01",
+            "amount": 100
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "zone_limit",
+        "zoneLimitReached": true,
+        "maxBid": 0
+      }
+    },
+    {
+      "id": "team_full",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "UnknownPlayer",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 399,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player01",
+            "winner": "coach01",
+            "amount": 100
+          },
+          {
+            "playerName": "Player09",
+            "winner": "coach01",
+            "amount": 201
+          },
+          {
+            "playerName": "Player17",
+            "winner": "coach01",
+            "amount": 100
+          },
+          {
+            "playerName": "Player18",
+            "winner": "coach01",
+            "amount": 100
+          },
+          {
+            "playerName": "Player19",
+            "winner": "coach01",
+            "amount": 100
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 100
+          }
+        }
+      ],
+      "expected": {
+        "valid": false,
+        "error_category": "team_full"
+      }
+    },
+    {
+      "id": "zero_legal",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 0
+          }
+        }
+      ],
+      "expected": {
+        "valid": true
+      }
+    },
+    {
+      "id": "zero_beats_null",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": 0,
+          "coach02": null
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "select_winner",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "winner": "coach01",
+        "winningAmount": 0
+      },
+      "rng_values": [
+        0.0
+      ]
+    },
+    {
+      "id": "null_no_bid",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": null,
+          "coach02": null
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "select_winner",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "winner": null,
+        "winningAmount": null
+      }
+    },
+    {
+      "id": "tie_choose_second",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": 250,
+          "coach02": 250,
+          "coach03": 200
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "select_winner",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "candidates": [
+          "coach01",
+          "coach02"
+        ],
+        "winner": "coach02",
+        "winningAmount": 250
+      },
+      "rng_values": [
+        0.75
+      ]
+    },
+    {
+      "id": "modify_bid",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "submit_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 200
+          }
+        },
+        {
+          "operation": "submit_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 150
+          }
+        }
+      ],
+      "expected": {
+        "bids": {
+          "coach01": 150
+        }
+      }
+    },
+    {
+      "id": "minimum_prunes_old_bid",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": 100,
+          "coach02": 250
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "set_minimum_bid",
+          "args": {
+            "amount": 200
+          }
+        }
+      ],
+      "expected": {
+        "minimumBid": 200,
+        "bids": {
+          "coach01": null,
+          "coach02": 250
+        }
+      }
+    },
+    {
+      "id": "auto_minimum",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "idle",
+        "currentPlayer": null,
+        "timeLeft": 0,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "start_auction",
+          "args": {
+            "playerName": "Player17",
+            "duration": 90
+          }
+        }
+      ],
+      "expected": {
+        "status": "running",
+        "timeLeft": 90,
+        "bids": {
+          "coach01": 0,
+          "coach02": 0,
+          "coach03": 0,
+          "coach04": 0,
+          "coach05": 0,
+          "coach06": 0,
+          "coach07": 0,
+          "coach08": 0
+        }
+      }
+    },
+    {
+      "id": "auto_second_player_minimum",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "idle",
+        "currentPlayer": null,
+        "timeLeft": 0,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 900,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player01",
+            "winner": "coach01",
+            "amount": 100
+          }
+        ],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "start_auction",
+          "args": {
+            "playerName": "Player17",
+            "duration": 90
+          }
+        }
+      ],
+      "expected": {
+        "bids": {
+          "coach01": 201,
+          "coach02": 0,
+          "coach03": 0,
+          "coach04": 0,
+          "coach05": 0,
+          "coach06": 0,
+          "coach07": 0,
+          "coach08": 0
+        }
+      }
+    },
+    {
+      "id": "pause_resume",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "pause",
+          "args": {}
+        },
+        {
+          "operation": "resume",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "status": "running",
+        "timeLeft": 60
+      }
+    },
+    {
+      "id": "undo_award",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "ended",
+        "currentPlayer": "Player17",
+        "timeLeft": 0,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 800,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [
+          {
+            "playerName": "Player17",
+            "winner": "coach01",
+            "amount": 200
+          }
+        ],
+        "winner": "coach01",
+        "winningAmount": 200,
+        "lastAwardUndo": {
+          "playerName": "Player17",
+          "winner": "coach01",
+          "amount": 200,
+          "bids": {
+            "coach01": 200,
+            "coach02": 100
+          }
+        }
+      },
+      "steps": [
+        {
+          "operation": "undo_last_award",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "status": "ended",
+        "currentPlayer": "Player17",
+        "timeLeft": 0,
+        "winner": null,
+        "winningAmount": null,
+        "budgets": {
+          "coach01": 1000
+        },
+        "history": [],
+        "bids": {
+          "coach01": 200,
+          "coach02": 100
+        },
+        "canUndo": false
+      }
+    },
+    {
+      "id": "end_highest_once",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": 200,
+          "coach02": 300
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "end_auction",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "status": "ended",
+        "winner": "coach02",
+        "winningAmount": 300,
+        "budgets": {
+          "coach02": 700
+        },
+        "history": [
+          {
+            "playerName": "Player17",
+            "winner": "coach02",
+            "amount": 300
+          }
+        ],
+        "canUndo": true
+      },
+      "rng_values": [
+        0.0
+      ]
+    },
+    {
+      "id": "end_no_bid",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {
+          "coach01": null
+        },
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "end_auction",
+          "args": {}
+        }
+      ],
+      "expected": {
+        "status": "ended",
+        "winner": null,
+        "winningAmount": null,
+        "history": []
+      },
+      "rng_values": [
+        0.0
+      ]
+    },
+    {
+      "id": "zero_when_below_reserve",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "Player17",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 50,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 0
+          }
+        }
+      ],
+      "expected": {
+        "valid": true,
+        "maxBid": 0,
+        "reserveForRemaining": 400
+      }
+    },
+    {
+      "id": "unknown_player_has_no_zone",
+      "classification": "domain_parity",
+      "initial": {
+        "status": "running",
+        "currentPlayer": "UnknownPlayer",
+        "timeLeft": 60,
+        "duration": 90,
+        "minimumBid": 0,
+        "bids": {},
+        "budgets": {
+          "coach01": 1000,
+          "coach02": 1000,
+          "coach03": 1000,
+          "coach04": 1000,
+          "coach05": 1000,
+          "coach06": 1000,
+          "coach07": 1000,
+          "coach08": 1000
+        },
+        "history": [],
+        "winner": null,
+        "winningAmount": null,
+        "lastAwardUndo": null
+      },
+      "steps": [
+        {
+          "operation": "validate_bid",
+          "args": {
+            "coachId": "coach01",
+            "amount": 100
+          }
+        }
+      ],
+      "expected": {
+        "valid": true,
+        "playerZone": null,
+        "zoneLimit": null
+      }
+    }
+  ]
+}

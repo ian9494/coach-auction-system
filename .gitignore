@@ -30,3 +30,13 @@ tmp/
 temp/
 /data/*
 !/data/coach.csv
+
+# Isolated Python final project
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+runtime/final_project/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
