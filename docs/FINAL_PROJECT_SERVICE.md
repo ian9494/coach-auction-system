@@ -90,3 +90,6 @@ Windows sandbox 可能阻擋 asyncio 的 OS 內部 self-pipe：需允許這個 e
 測試有 deterministic fake clocks / timers，以及實際 asyncio task 的 cancel / retry / service callback 測試，不依賴網路。
 
 Phase 2B 可接 transport，仍需實作 caller auth、role projections、ACK 映射與安全 request namespace；raw TCP requirement 尚未確認。
+
+Phase 2B 已接上 ASGI / Socket.IO / read-only HTTP、token auth、角色白名單與 principal request namespace，見 [FINAL_PROJECT_PROTOCOL.md](FINAL_PROJECT_PROTOCOL.md)。
+Service 增加 post-commit subscriber queue（包含 timeout），只送 defensive snapshot；未改競標 domain 或 persistence schema。

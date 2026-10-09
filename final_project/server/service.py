@@ -37,6 +37,20 @@ class AuctionService:
         self._lock = asyncio.Lock()
         self._deadline_mono: float | None = None
         self._closed = False
+        self._subscribers: set[asyncio.Queue[Snapshot]] = set()
+
+    def subscribe(self) -> asyncio.Queue[Snapshot]:
+        """Post-commit full snapshots, including internal timeout settlements."""
+        queue = asyncio.Queue()
+        self._subscribers.add(queue)
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue[Snapshot]) -> None:
+        self._subscribers.discard(queue)
+
+    def _notify(self) -> None:
+        for queue in self._subscribers:
+            queue.put_nowait(self.snapshot())
 
     @classmethod
     async def open(cls, repository: SQLiteRepository, initial: AuctionState, *,
@@ -207,6 +221,8 @@ class AuctionService:
         self._deadline_mono = deadline_mono
         if timer_changed:
             self._schedule()
+        if changed:
+            self._notify()
         return deepcopy(result)
 
     def _remember(self, command: Command, fingerprint: str, result: CommandResult) -> CommandResult:
