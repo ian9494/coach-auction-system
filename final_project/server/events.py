@@ -38,10 +38,18 @@ class SocketTransport:
                 return
             self._last_version = snapshot.version
             self._last_remaining = snapshot.remaining
-            await self.sio.emit('viewer_state', viewer_projection(snapshot), room='viewer')
-            await self.sio.emit('admin_state', admin_projection(snapshot), room='admin')
+            await self._emit_room('viewer_state', viewer_projection(snapshot), 'viewer')
+            await self._emit_room('admin_state', admin_projection(snapshot), 'admin')
             for coach in snapshot.state.coaches:
-                await self.sio.emit('coach_state', coach_projection(snapshot, coach.id), room=f'coach:{coach.id}')
+                await self._emit_room('coach_state', coach_projection(snapshot, coach.id), f'coach:{coach.id}')
+
+    async def _emit_room(self, event, projection, room):
+        try:
+            await self.sio.emit(event, projection, room=room)
+        except Exception:
+            # A failed recipient must not suppress updates to other roles.
+            # Full snapshots on rejoin recover missed delivery; commit remains authoritative.
+            logger.warning('Socket room broadcast failed event=%s version=%s', event, projection['version'])
 
     async def join(self, sid, role, data):
         if not self.runtime.ready:
