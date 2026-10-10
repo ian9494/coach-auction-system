@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve upstream vendored bytes and the verified SHA-256 across Windows checkouts.
+public/vendor/socket.io.min.js -text
+public/vendor/socket.io.LICENSE -text

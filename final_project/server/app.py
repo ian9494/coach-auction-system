@@ -16,6 +16,7 @@ from .auth import AuthConfig
 from .events import SocketTransport
 from .http_api import register_http
 from .service import AuctionService
+from .static import register_static
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ def create_app(config: ProjectConfig | None = None, auth: AuthConfig | None = No
 
     http = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     register_http(http, runtime)
+    register_static(http)
     app = socketio.ASGIApp(sio, other_asgi_app=http)
     # Explicit handles for in-process tests / orderly lifecycle inspection.
     app.http, app.sio, app.runtime, app.transport = http, sio, runtime, transport

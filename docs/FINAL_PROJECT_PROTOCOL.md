@@ -121,7 +121,7 @@ join 返回最新完整 snapshot（Coach 含自己 myBid）。Client 應以 vers
 | GET /api/state/viewer | 只有 Viewer projection |
 
 沒有公開 raw state / bids / Admin endpoint，也沒有 HTTP mutation；不讀正式 member.csv 或以 CSV results 作 authority。
-尚未 ready 時 read API 回503；未知路由404。沒有掛載 public 或 data。
+尚未 ready 時 read API 回503；未知路由404。Phase 5 僅掛載 /final-project、/vendor、/assets 三個目錄，不掛載整個 public 或 data；legacy UI 仍不公開於 Python server。Viewer contract 與 URLs 見 [Viewer／OBS](FINAL_PROJECT_VIEWER.md)。
 
 ## Tests / limits
 
@@ -135,6 +135,6 @@ Phase 4 更新：Admin event `add_all_budgets` 已實作，payload 為 request_i
 已知限制：目前只適合受控 demo，尚無 token輪換、auth嘗試限流、TLS deployment 或跨機實测；不可直接公開部署。
 實測 Python AsyncClient 的 polling disconnect 可能等到 outstanding long-poll GET 的 heartbeat window 才結束；live test 採測試專用1秒 ping interval / timeout，應用預設值未更動。後續 Client 應明確處理 bounded disconnect，WebSocket 路徑本輪關閉正常。
 保留單一 authority / synchronous SQLite 與 processed-request未裁剪的 Phase 2A 限制。完整 snapshot 廣播 queue 在高流量時也需要流量控制。
-Phase 2C 範圍待確認；本輪不開始 GUI / Viewer / TCP。課程是否要求 raw TCP 仍未知。
+後續已完成 Phase 2C 整合、Phase 3 / 4 GUI 及 Phase 5 Viewer；測試與範圍詳見各階段文件。課程是否要求 raw TCP 仍未知，目前尚未實作 TCP adapter。
 
 整合方式依官方 [python-socketio ASGI 文件](https://python-socketio.readthedocs.io/en/stable/server.html)；Python測試client使用 [AsyncClient](https://python-socketio.readthedocs.io/en/stable/client.html)。

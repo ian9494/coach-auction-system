@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>專題有底色 Viewer</title>
+  <link rel="icon" href="/final-project/fallback-avatar.svg">
+  <link rel="stylesheet" href="/final-project/viewer.css">
+  <script defer src="/vendor/socket.io.min.js"></script>
+  <script defer src="/final-project/viewer.js"></script>
+</head>
+<body class="colored">
+  <main id="viewer-root" class="viewer-stage" data-status="idle">
+    <div class="feed-zone" aria-hidden="true"></div>
+    <section class="hero" aria-label="目前競標">
+      <img id="player-avatar" class="player-avatar" src="/final-project/fallback-avatar.svg" alt="當前選手">
+      <div><div class="eyebrow">FINAL PROJECT · SEALED AUCTION</div><h1 id="current-player">等待選手</h1><div id="status">等待競標</div></div>
+      <div class="countdown-panel"><div id="countdown" class="countdown">0</div><div>剩餘秒數</div></div>
+    </section>
+    <div class="public-meta"><span id="connection">連線中…</span><span>Minimum Bid <span id="minimum">0</span></span><span id="result">出價保密，結算後公布得標結果</span></div>
+    <section id="coach-grid" class="coach-grid" aria-label="教練隊伍"></section>
+    <nav class="viewer-nav"><a href="/final-project/results.html">得標結果</a> · <a href="/final-project/viewer-colored.html">有底色</a> · <a href="/final-project/viewer-transparent.html">OBS 透明版</a></nav>
+  </main>
+</body>
+</html>
