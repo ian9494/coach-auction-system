@@ -74,6 +74,6 @@ Browser smoke 驗證 Player01 → 兩 Coach 出價 → pause / resume → end �
 
 ## 限制與 Phase 6
 
-僅驗證目前本機 Edge / Chromium；未做真正 OBS、其他瀏覽器或跨機部署驗證。舊 OBS / CEF 的新 CSS 與 AbortSignal API 支援需實測。results 最多約 3 秒更新延遲。缺少圖片會有有限次 404 後 fallback，屬預期。
+僅驗證目前本機 Edge / Chromium；未做真正 OBS、其他瀏覽器或跨機部署驗證。Phase 6 將 AbortSignal.timeout 換成 AbortController + setTimeout，透明頁以 html class 取代 :has；OBS CEF 仍需實機 smoke。results 最多約 3 秒更新延遲。缺少圖片會有有限次 404 後 fallback，屬預期。
 
-Static 依賴 repository 的 public，使用 README 的 editable 安裝；獨立 wheel 的 static packaging 留 Phase 6 整理。沒有新增 raw TCP、TLS、Cloudflare、production deployment、roster import 或 reset。legacy Viewer / results 全部保留不動，Python domain 與 Coach / Admin GUI 亦未修改。
+Phase 6 wheel 已封裝 static／vendor／assets，installed runtime 由 final_project/resources.py 找到 prefix 下的只讀資產；驗證與步驟見 [Demo](FINAL_PROJECT_DEMO.md)。沒有新增 raw TCP、TLS、Cloudflare、production deployment、roster import 或 reset。legacy Viewer / results 全部保留不動，Python domain 與 Coach / Admin GUI 亦未修改。

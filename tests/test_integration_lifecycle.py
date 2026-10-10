@@ -86,6 +86,17 @@ def test_e2e_reconnect_stress_and_ack_loss(tmp_path):
             assert service.snapshot().state.winner is None and set(service.snapshot().state.bids.values()) == {0}
             # New request targeting the old round cannot mutate the next round.
             assert (await r.command(coaches[0], 'submit_bid', 'stale', round_id=round_id, amount=400))['error_code'] == 'STALE_ROUND'
+            assert (await r.command(coaches[1], 'submit_bid', 'second-bid', amount=350))['ok']
+            assert (await r.command(admin, 'end_auction', 'second-end'))['ok']
+            await eventually(lambda: viewer.frames[-1]['status'] == 'ended')
+            assert viewer.frames[-1]['winner'] == 'coach02'
+            async with httpx.AsyncClient(base_url=r.url) as http:
+                results = (await http.get('/api/results')).json()
+            assert results == [{'playerName': 'Player18', 'coachId': 'coach02', 'amount': 350}]
+            from final_project.client.results_export import export_results
+            export_results(tmp_path / 'results.csv', results)
+            assert 'Player18,coach02,350' in (tmp_path / 'results.csv').read_text(encoding='utf-8-sig')
+            assert all(not keys(f) & FORBIDDEN for f in viewer.frames)
     asyncio.run(asyncio.wait_for(run(), 40))
 
 

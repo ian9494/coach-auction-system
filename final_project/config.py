@@ -4,9 +4,10 @@ Paths are rooted at this checkout, not the caller's working directory.
 Configuration loading does not create directories, open a DB, or start a server.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 import json
+import os
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -65,3 +66,17 @@ Unknown fields are rejected by the dataclass constructor. No .env auto-loading.
     if "project_root" in values:
         raise ValueError("project_root is only an explicit test constructor option")
     return ProjectConfig(**values)
+
+
+def load_launch_config(path=None, *, project_root=None, environ=None) -> ProjectConfig:
+    """Explicit CLI config/env overrides; installed runtime never targets site-packages."""
+    env = os.environ if environ is None else environ
+    config = load_config(path)
+    from final_project.resources import resource_root
+    source = PROJECT_ROOT / 'public/final-project/viewer.html'
+    root = Path(project_root or env.get('FINAL_PROJECT_ROOT') or (PROJECT_ROOT if source.is_file() else Path.cwd())).resolve()
+    port = env.get('FINAL_PROJECT_PORT', str(config.port))
+    if not isinstance(port, str) or not port.isascii() or not port.isdecimal():
+        raise ValueError('FINAL_PROJECT_PORT must be a decimal integer')
+    resource_root()  # Fail on missing package resources before any runtime writes.
+    return replace(config, project_root=root, host=env.get('FINAL_PROJECT_HOST', config.host), port=int(port))

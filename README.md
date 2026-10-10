@@ -1,37 +1,31 @@
-# coach-auction-system
-A coach draft auction system for community tournament
+# Coach Auction System
 
-## Final Project Development
+VALORANT 社群賽事密封競標系統；保留 Node 正式版，另有大學網路程式設計 Python 專題版。
 
-原本 Node 版本仍保留。Python 專題程式位於 `final_project/`，已完成 domain、service／SQLite／deadline、ASGI／Socket.IO／HTTP、整合驗證、Tkinter Coach／Admin GUI 與專題 Viewer／OBS overlay。
-DEMO / TEST ONLY 名單在 `examples/final_project/`；正式 `data/` 不供專題測試使用。
-專題預設 port 為 3001，runtime 位於 `runtime/final_project/`；設定範例為 `config/final_project.example.json`。
-規則與已知缺陷見 `docs/FINAL_PROJECT_RULES_BASELINE.md`，規劃見 `FINAL_PROJECT_MIGRATION.md`。
-Service、持久化與測試方式見 `docs/FINAL_PROJECT_SERVICE.md`。
-Token 設定、啟動與通訊協定見 `docs/FINAL_PROJECT_PROTOCOL.md`；未設定憑證時拒絕啟動。
+## Final Project Version
 
-本機 Coach demo（PowerShell）：
+Python ASGI／Socket.IO Server + Tkinter Admin／Coach GUI + Web Viewer／OBS。多人密封出價與改價、倒數、pause/resume、預算／zone 規則、隨機平手抽選、undo、結果 CSV export、SQLite 與重連恢復。Server 為唯一狀態來源。
+
+Python 3.11+（含 Tkinter），PowerShell：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-$env:FINAL_PROJECT_ADMIN_TOKEN = [guid]::NewGuid().ToString('N')
-1..8 | ForEach-Object {
-    $key = 'FINAL_PROJECT_COACH_TOKEN_COACH{0:00}' -f $_
-    [Environment]::SetEnvironmentVariable($key, [guid]::NewGuid().ToString('N'), 'Process')
-}
-# 複製本機 Coach01 demo token，到 GUI 的遮罩 Token 欄貼上。
-Set-Clipboard $env:FINAL_PROJECT_COACH_TOKEN_COACH01
-.\.venv\Scripts\python.exe -m final_project.server.app
+$demoRoot = Join-Path $PWD ('runtime/final_project/demo-' + [guid]::NewGuid().ToString('N'))
+.\.venv\Scripts\python.exe -m final_project.demo --root $demoRoot
+.\scripts\start_final_server.ps1 -DemoRoot $demoRoot -Config (Join-Path $demoRoot 'config.json')
 ```
 
-另一個終端執行 `.\scripts\start_final_coach.ps1`，以 `coach01` 登入本機 server。
-demo server 使用 examples 名單與隔離的 `runtime/final_project/`，不使用正式 data。
-Coach 啟動、threading、重連與版本排序見 [Coach Client 說明](docs/FINAL_PROJECT_COACH_CLIENT.md)。
+其他終端執行 `.\scripts\start_final_admin.ps1`／`.\scripts\start_final_coach.ps1`。GUI 輸入 URL／身份／token；本機 token 在 demoRoot 的 runtime/final_project/demo_tokens.json，不提交 Git。
 
-Admin 執行 `.\scripts\start_final_admin.ps1`，使用 server 對應的 Admin Token 登入；可控制競標、全體加預算、undo 與匯出結果 CSV。
-控制、二次確認與目前支援範圍見 [Admin Client 說明](docs/FINAL_PROJECT_ADMIN_CLIENT.md)。Roster import 與安全 reset 留後續階段。
+預設 127.0.0.1:3001；Server 可用 FINAL_PROJECT_HOST／FINAL_PROJECT_PORT 覆寫，禁止 3000。Viewer `/final-project/viewer.html`，OBS `/final-project/viewer-transparent.html`（1920×1080），結果 `/final-project/results.html`。
 
-啟動 Python server 後，瀏覽器開 `http://127.0.0.1:3001/final-project/viewer.html`。
-OBS Browser Source 使用 `http://127.0.0.1:3001/final-project/viewer-transparent.html`（1920×1080）；有底色版本為 `viewer-colored.html`，結果頁為 `results.html`。
-Viewer 使用本地 vendor JS，可離線 demo；running 不傳送 private bid。URL、靜態檔、透明模式與 browser smoke 見 [Viewer／OBS 說明](docs/FINAL_PROJECT_VIEWER.md)。
+程式 final_project/；DEMO / TEST ONLY 名單 examples/final_project/ 有 8 教練／40 選手，每隊初始 1000。正式 data/ 不供專題測試。Admin 90 秒或 10 秒 quick demo。沒有自由註冊、在線 roster import、presence、reset command；新展示建立新 demoRoot。
+
+測試 `.\.venv\Scripts\python.exe -m pytest -q`。Browser smoke 需配置 Node Playwright／Edge，否則 skip；交付驗證包含 browser。完整步驟及 wheel 安裝見 [Demo](docs/FINAL_PROJECT_DEMO.md)。
+
+報告素材：[架構與方法](docs/FINAL_PROJECT_ARCHITECTURE.md)、[訊息循序圖](docs/FINAL_PROJECT_SEQUENCE_DIAGRAMS.md)、[課程需求對照](docs/FINAL_PROJECT_REQUIREMENTS_CHECKLIST.md)、[文件入口](docs/FINAL_PROJECT_MIGRATION.md)。未取得課程 PDF 原文，自由註冊及 raw TCP 要求須向老師確認。
+
+## Legacy Node Version
+
+原 server.js、public/admin.*／coach.* 與 legacy Viewer 保留，核心未因專題交付改寫。本輪不部署、不接正式站、不覆寫正式資料。原 Node 版使用既有 package.json 與正式環境設定，勿混用 Python demo token／runtime。

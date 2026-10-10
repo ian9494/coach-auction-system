@@ -22,7 +22,7 @@ h1 { margin: 4px 0; font-size: 28px; } h2 { margin: 0; font-size: 19px; }
 .viewer-stage[data-status="ended"] #result { color: #fcd34d; }
 .colored { background: linear-gradient(135deg, #142c47, #231e3b); }
 .transparent, .transparent .viewer-stage, .transparent .feed-zone { background: transparent; }
-html:has(body.transparent) { background: transparent; color-scheme: normal; }
+html.transparent { background: transparent; color-scheme: normal; }
 .transparent .feed-zone { height: 36vh; }
 .transparent .viewer-stage { padding-top: 0; }
 .transparent .hero, .transparent .coach-card { background: rgba(13, 20, 32, .9); }

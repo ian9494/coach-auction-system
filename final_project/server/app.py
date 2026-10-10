@@ -9,7 +9,7 @@ import re
 
 from fastapi import FastAPI
 import socketio
-from final_project.config import ProjectConfig
+from final_project.config import ProjectConfig, load_launch_config
 from final_project.domain.models import AuctionState, Coach, Player
 from final_project.storage.repository import SQLiteRepository
 from .auth import AuthConfig
@@ -113,9 +113,19 @@ def create_app(config: ProjectConfig | None = None, auth: AuthConfig | None = No
 
 
 def main():
+    import argparse
+    from pathlib import Path
     import uvicorn
-    config = ProjectConfig()
-    uvicorn.run(create_app(config), host=config.host, port=config.port, workers=1,
+    parser = argparse.ArgumentParser(description='Isolated Python auction server')
+    parser.add_argument('--config', type=Path)
+    parser.add_argument('--demo-root', type=Path)
+    args = parser.parse_args()
+    config = load_launch_config(args.config, project_root=args.demo_root)
+    auth = None
+    if args.demo_root is not None:
+        from final_project.demo import demo_auth
+        auth = demo_auth(args.demo_root)
+    uvicorn.run(create_app(config, auth), host=config.host, port=config.port, workers=1,
                 access_log=False, log_level='warning')
 
 

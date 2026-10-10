@@ -6,8 +6,10 @@
   async function refresh() {
     if (loading) return;
     loading = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
-      const response = await fetch('/api/results', {cache: 'no-store', signal: AbortSignal.timeout(5000)});
+      const response = await fetch('/api/results', {cache: 'no-store', signal: controller.signal});
       if (!response.ok) throw new Error('unavailable');
       const results = await response.json();
       if (!Array.isArray(results)) throw new Error('invalid');
@@ -22,7 +24,7 @@
       }
       rows.replaceChildren(fragment); status.textContent = results.length ? `已結算 ${results.length} 筆` : '尚無得標結果';
     } catch (_) { status.textContent = '離線／無法更新 · 保留最後結果'; }
-    finally { loading = false; }
+    finally { clearTimeout(timeout); loading = false; }
   }
   refresh();
   const timer = setInterval(refresh, 3000);

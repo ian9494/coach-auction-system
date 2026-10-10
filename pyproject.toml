@@ -22,6 +22,16 @@ dev = ["pytest>=8,<10", "httpx>=0.28.1,<0.29"]
 [tool.setuptools.packages.find]
 include = ["final_project*"]
 
+# Wheel .data resources install beneath the venv prefix, outside executable code.
+[tool.setuptools.data-files]
+"share/coach-auction-final-project/public/final-project" = ["public/final-project/*.html", "public/final-project/*.js", "public/final-project/*.css", "public/final-project/*.svg"]
+"share/coach-auction-final-project/public/vendor" = ["public/vendor/socket.io.min.js", "public/vendor/socket.io.LICENSE", "public/vendor/README.md"]
+"share/coach-auction-final-project/public/assets/coaches" = ["public/assets/coaches/*"]
+"share/coach-auction-final-project/public/assets/players" = ["public/assets/players/*"]
+"share/coach-auction-final-project/public/assets/frames" = ["public/assets/frames/*"]
+"share/coach-auction-final-project/examples/final_project" = ["examples/final_project/*.csv", "examples/final_project/*.md"]
+"share/coach-auction-final-project/config" = ["config/final_project.example.json", "config/final_project.demo.example.json"]
+
 # Validated Socket.IO 5 / Engine.IO 4 stack; GUI dependencies remain absent.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
