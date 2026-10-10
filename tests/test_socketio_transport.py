@@ -42,9 +42,10 @@ def test_events_ack_reconnect_and_authority(tmp_path):
             assert end['ok'] and app.runtime.service.snapshot().state.winner=='coach01'
             assert (await admin.call('undo_last_award',request(app,'undo')))['ok']
             assert not app.runtime.service.snapshot().state.history
-            for event in ('add_all_budgets','reset_auction'):
+            for event in ('reset_auction',):
                 assert (await admin.call(event,request(app,'unsupported')))['error_code']=='NOT_IMPLEMENTED'
                 assert (await viewer.call(event,request(app,'forbidden')))['error_code']=='FORBIDDEN'
+            assert (await admin.call('add_all_budgets',request(app,'missing-budget')))['error_code']=='INVALID_PAYLOAD'
     asyncio.run(run())
 
 

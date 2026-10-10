@@ -13,6 +13,7 @@ class CommandKind(str, Enum):
     END = "end"
     UNDO = "undo"
     TIMEOUT = "timeout"
+    ADD_ALL_BUDGETS = "add_all_budgets"
 
 
 @dataclass(frozen=True)

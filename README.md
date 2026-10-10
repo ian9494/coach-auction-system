@@ -3,7 +3,7 @@ A coach draft auction system for community tournament
 
 ## Final Project Development
 
-原本 Node 版本仍保留。Python 專題程式位於 `final_project/`，已完成 domain、service／SQLite／deadline、ASGI／Socket.IO／HTTP、整合驗證與 Tkinter Coach GUI；尚無 Admin GUI 或 Viewer 整合。
+原本 Node 版本仍保留。Python 專題程式位於 `final_project/`，已完成 domain、service／SQLite／deadline、ASGI／Socket.IO／HTTP、整合驗證與 Tkinter Coach／Admin GUI；尚無 Viewer 整合。
 DEMO / TEST ONLY 名單在 `examples/final_project/`；正式 `data/` 不供專題測試使用。
 專題預設 port 為 3001，runtime 位於 `runtime/final_project/`；設定範例為 `config/final_project.example.json`。
 規則與已知缺陷見 `docs/FINAL_PROJECT_RULES_BASELINE.md`，規劃見 `FINAL_PROJECT_MIGRATION.md`。
@@ -28,3 +28,6 @@ Set-Clipboard $env:FINAL_PROJECT_COACH_TOKEN_COACH01
 另一個終端執行 `.\scripts\start_final_coach.ps1`，以 `coach01` 登入本機 server。
 demo server 使用 examples 名單與隔離的 `runtime/final_project/`，不使用正式 data。
 Coach 啟動、threading、重連與版本排序見 [Coach Client 說明](docs/FINAL_PROJECT_COACH_CLIENT.md)。
+
+Admin 執行 `.\scripts\start_final_admin.ps1`，使用 server 對應的 Admin Token 登入；可控制競標、全體加預算、undo 與匯出結果 CSV。
+控制、二次確認與目前支援範圍見 [Admin Client 說明](docs/FINAL_PROJECT_ADMIN_CLIENT.md)。Roster import 與安全 reset 留後續階段。

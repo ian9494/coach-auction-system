@@ -57,6 +57,17 @@ def set_minimum_bid(state: AuctionState, amount: object) -> AuctionState:
     return new
 
 
+def add_all_budgets(state: AuctionState, amount: object) -> AuctionState:
+    """Explicit Admin mutation; never refill bids or alter auction/history."""
+    if type(amount) is not int or amount <= 0 or amount > 2**53 - 1:
+        raise DomainError('invalid_amount')
+    if any(value + amount > 2**53 - 1 for value in state.budgets.values()):
+        raise DomainError('invalid_amount')
+    new = deepcopy(state)
+    new.budgets = {cid: value + amount for cid, value in state.budgets.items()}
+    return new
+
+
 def end_auction(state: AuctionState, *, rng: Callable[[], float], clock: Callable[[], str]) -> AuctionState:
     new = deepcopy(state)
     if new.status not in (AuctionStatus.RUNNING, AuctionStatus.PAUSED):

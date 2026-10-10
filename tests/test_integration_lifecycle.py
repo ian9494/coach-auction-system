@@ -29,7 +29,7 @@ def test_e2e_reconnect_stress_and_ack_loss(tmp_path):
             snap = service.snapshot()
             assert [snap.state.bids[f'coach{i:02d}'] for i in range(1, 9)] == [121+i*20 for i in range(8)]
             assert service._repository.load().state == snap.state
-            await eventually(lambda: admin.frames[-1]['version'] == snap.version)
+            await eventually(lambda: all(c.frames[-1]['version'] == snap.version for c in [admin, viewer, *coaches]))
             for c in [admin, viewer, *coaches]:
                 assert [f['version'] for f in c.frames] == sorted(f['version'] for f in c.frames)
             assert admin.frames[-1]['allBids'] == snap.state.bids

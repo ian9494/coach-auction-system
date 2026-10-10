@@ -98,7 +98,7 @@ class SocketTransport:
             required = 'coach' if event == 'submit_bid' else 'admin'
             if session['role'] != required:
                 return self.error('FORBIDDEN', request_id)
-            if event in ('add_all_budgets', 'reset_auction'):
+            if event == 'reset_auction':
                 return self.error('NOT_IMPLEMENTED', request_id)
             try:
                 request_id, round_id, payload = mutation_payload(event, data)
@@ -150,7 +150,7 @@ class SocketTransport:
                     return self.error('INTERNAL_ERROR', request_id_of(data))
             return handler
 
-        for event in (*EVENTS, 'add_all_budgets', 'reset_auction'):
+        for event in (*EVENTS, 'reset_auction'):
             self.sio.on(event, handler=safe_mutation(event))
 
         @self.sio.on('*')

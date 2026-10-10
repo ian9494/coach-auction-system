@@ -131,7 +131,8 @@ class AuctionService:
             if old["fingerprint"] != fingerprint:
                 return self._result(False, "REQUEST_ID_CONFLICT")
             return CommandResult(**deepcopy(old["result"]))
-        if kind != CommandKind.START and (command.round_id is None or command.round_id != self._snapshot.round_id):
+        if kind != CommandKind.START and (command.round_id != self._snapshot.round_id or
+                command.round_id is None and kind != CommandKind.ADD_ALL_BUDGETS):
             return self._remember(command, fingerprint, self._result(False, "STALE_ROUND"))
         if kind == CommandKind.TIMEOUT:
             if command.payload != {"deadline_utc": self._snapshot.deadline_utc}:
@@ -155,10 +156,15 @@ class AuctionService:
             allowed = {
                 CommandKind.START: {"player_name", "duration"}, CommandKind.SUBMIT_BID: {"coach_id", "amount"},
                 CommandKind.SET_MINIMUM_BID: {"amount"}, CommandKind.TIMEOUT: {"deadline_utc"},
+                CommandKind.ADD_ALL_BUDGETS: {"amount"},
             }.get(kind, set())
             if not set(payload).issubset(allowed):
                 raise DomainError("invalid_command")
             if kind == CommandKind.START:
+                player_name = payload.get('player_name')
+                if (not isinstance(player_name, str) or player_name.strip() not in {p.name for p in state.roster}
+                        or any(award.player == player_name.strip() for award in state.history)):
+                    raise DomainError('invalid_player')
                 candidate.state = transitions.start_auction(state, **payload)
                 candidate.round_id = self._round_factory()
                 if not isinstance(candidate.round_id, str) or not candidate.round_id or candidate.round_id == self._snapshot.round_id:
@@ -184,6 +190,8 @@ class AuctionService:
                 candidate.state = transitions.submit_bid(state, **payload)
             elif kind == CommandKind.SET_MINIMUM_BID:
                 candidate.state = transitions.set_minimum_bid(state, **payload)
+            elif kind == CommandKind.ADD_ALL_BUDGETS:
+                candidate.state = transitions.add_all_budgets(state, **payload)
             elif kind in (CommandKind.END, CommandKind.TIMEOUT):
                 candidate.state = transitions.end_auction(state, rng=self._rng, clock=lambda:
                     datetime.fromtimestamp(self._clock.utc(), timezone.utc).isoformat())

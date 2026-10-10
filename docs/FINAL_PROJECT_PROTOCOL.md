@@ -125,6 +125,8 @@ join 返回最新完整 snapshot（Coach 含自己 myBid）。Client 應以 vers
 
 ## Tests / limits
 
+Phase 4 更新：Admin event `add_all_budgets` 已實作，payload 為 request_id、round_id（idle 無 round 時可 null）、strict positive int amount；當前 round 必須相符，走 service 的 atomic commit / dedup / version 路徑。Coach / Viewer 無權限。reset_auction 仍為 NOT_IMPLEMENTED。Start 現在由 service 驗證 roster 成員與未售出狀態。Admin client 控制與 CSV export 見 [Admin Client](FINAL_PROJECT_ADMIN_CLIENT.md)。以下測試數字描述 Phase 2B 當時結果。
+
 測試分兩層：in-process FastAPI / 已註冊 Socket.IO handlers（fake session / emit capture），以及真實 Uvicorn ASGI + Admin / Viewer / 8 個 AsyncClient 的 localhost:0 測試。
 後者驗證 WebSocket 與 HTTP polling handshake、ACK、rooms、重連、HTTP 與 shutdown；固定3001未啟動，正式站未連線。
 涵蓋角色race、冒名bid、strict payload、敏感欄位缺席、token不出現在錯誤 / log / DB、PERSISTENCE_ERROR、principal namespace與跨app重啟ACK、timeout廣播及倒數不寫DB。

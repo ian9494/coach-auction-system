@@ -32,6 +32,12 @@ class TransportError:
 
 
 @dataclass(frozen=True)
+class HttpDataReceived:
+    resource: str
+    data: list
+
+
+@dataclass(frozen=True)
 class Credentials:
     url: str
     role: str
@@ -59,6 +65,7 @@ class ClientTransport:
         self._outbound = Queue()
         self._stop = threading.Event()
         self._ready = threading.Event()
+        self._cleaning = threading.Event()
         self._thread = None
         self._loop = self._task = None
         self.retry_delay, self.ack_timeout = retry_delay, ack_timeout
@@ -87,7 +94,25 @@ class ClientTransport:
         self._stop.set()
         loop, task = self._loop, self._task
         if loop is not None and task is not None and not loop.is_closed():
-            loop.call_soon_threadsafe(task.cancel)
+            try:
+                loop.call_soon_threadsafe(self._cancel_worker)
+            except RuntimeError:
+                pass  # Worker finished between the check and scheduling.
+
+    def _cancel_worker(self):
+        # Auth failure can already be closing the socket when the UI stops it.
+        # Do not cancel cleanup or a second cancellation can leak the session.
+        if not self._cleaning.is_set() and self._task and not self._task.done():
+            self._task.cancel()
+
+    def fetch(self, resource):
+        if resource not in ('members', 'results'):
+            raise ValueError('INVALID_RESOURCE')
+        if not self._ready.is_set():
+            self.events.put(TransportError('OFFLINE'))
+            return False
+        self._outbound.put(('http:' + resource, {}))
+        return True
 
     def join(self, timeout=None):
         if self._thread:
@@ -147,13 +172,25 @@ class ClientTransport:
                     self.events.put(TransportError('UNCONFIRMED'))
                     continue
                 try:
+                    if event.startswith('http:'):
+                        resource = event[5:]
+                        async with session.get(credentials.url.rstrip('/') + '/api/' + resource,
+                                               timeout=aiohttp.ClientTimeout(total=self.ack_timeout),
+                                               allow_redirects=False) as response:
+                            response.raise_for_status()
+                            data = await response.json()
+                            if not isinstance(data, list):
+                                raise ValueError('INVALID_RESPONSE')
+                            self.events.put(HttpDataReceived(resource, deepcopy(data)))
+                        continue
                     ack = await c.call(event, payload, timeout=self.ack_timeout)
                     self.events.put(CommandAckReceived(deepcopy(ack)))
                 except Exception:
-                    self.events.put(TransportError('UNCONFIRMED'))
+                    self.events.put(TransportError('HTTP_FAILED' if event.startswith('http:') else 'UNCONFIRMED'))
         except asyncio.CancelledError:
             pass
         finally:
+            self._cleaning.set()
             self._ready.clear()
             self._discard_pending()
             try:
