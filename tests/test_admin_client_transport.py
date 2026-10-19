@@ -26,7 +26,7 @@ def test_admin_thread_transport_http_commands_minimum_reconnect_export(tmp_path)
                 running=await receive(t,SnapshotReceived,lambda e:e.snapshot['status']=='running')
                 rid=running.snapshot['round_id']
                 await r.command(coach,'submit_bid','bid',amount=200)
-                bid=await receive(t,SnapshotReceived,lambda e:e.snapshot['allBids']['coach01']==200)
+                bid=await receive(t,SnapshotReceived,lambda e:e.snapshot['allBids'].get('coach01')==200)
                 assert bid.snapshot['allBids']['coach02']==0
                 t.send_command('set_minimum_bid',round_id=rid,amount=250)
                 assert (await receive(t,CommandAckReceived)).ack['ok']
@@ -39,7 +39,7 @@ def test_admin_thread_transport_http_commands_minimum_reconnect_export(tmp_path)
                 sid=next(iter(r.app.sio.manager.get_participants('/','admin')))[0]
                 await r.app.sio.disconnect(sid)
                 await receive(t,ConnectionChanged,lambda e:e.state=='reconnecting')
-                rejoined=await receive(t,SnapshotReceived,lambda e:e.snapshot['allBids']['coach01']==300)
+                rejoined=await receive(t,SnapshotReceived,lambda e:e.snapshot['allBids'].get('coach01')==300)
                 await receive(t,ConnectionChanged,lambda e:e.state=='connected')
                 m=AdminViewModel(now=lambda:1000)
                 m.handle(rejoined); m.handle(ConnectionChanged('connected'))

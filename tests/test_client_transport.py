@@ -11,11 +11,20 @@ from .transport_support import config_and_auth
 
 
 async def receive(t, kind, predicate=lambda event:True):
+    # ACK and snapshot delivery order is deliberately unspecified. Preserve other
+    # events rather than silently losing an ended snapshot while waiting for ACK.
+    pending = getattr(t, '_test_pending_events', None)
+    if pending is None:
+        pending = t._test_pending_events = []
+    for index, event in enumerate(pending):
+        if isinstance(event, kind) and predicate(event):
+            return pending.pop(index)
     async with asyncio.timeout(8):
         while True:
             try:
                 event=t.events.get_nowait()
                 if isinstance(event,kind) and predicate(event): return event
+                pending.append(event)
             except Empty:
                 await asyncio.sleep(0.005)
 

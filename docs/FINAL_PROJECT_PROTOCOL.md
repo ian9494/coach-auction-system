@@ -138,3 +138,7 @@ Phase 4 更新：Admin event `add_all_budgets` 已實作，payload 為 request_i
 後續已完成 Phase 2C 整合、Phase 3 / 4 GUI 及 Phase 5 Viewer；測試與範圍詳見各階段文件。課程是否要求 raw TCP 仍未知，目前尚未實作 TCP adapter。
 
 整合方式依官方 [python-socketio ASGI 文件](https://python-socketio.readthedocs.io/en/stable/server.html)；Python測試client使用 [AsyncClient](https://python-socketio.readthedocs.io/en/stable/client.html)。
+
+## Coach 註冊擴充
+
+已新增 register_coach 與 join_coach {username,password}；原教練 token 僅對未認領席位有效，Admin 流程不變。帳號存於專題 SQLite 獨立表，不改 auction snapshot。以 [註冊說明](FINAL_PROJECT_REGISTRATION.md) 為最新操作與協定依據。

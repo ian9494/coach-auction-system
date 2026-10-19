@@ -43,3 +43,7 @@ Transport 可接受 coach / admin / viewer credentials，供後續 GUI 重用；
 另外執行隱藏 Tk 視窗的 widget 建構 / 初始出價停用 / shutdown smoke，以及真實 localhost ephemeral server 的 GUI 登入、選手顯示、Button.invoke 出價、snapshot 更新、pause / resume / end。測試使用 temp DB、隨機 token 與 injectable clock。這不是人工點擊驗證，未宣稱已完成視覺 QA 或 manual localhost 全流程 demo；pytest 本身完全不需要視窗。
 
 仍未處理大量長時間 inbound queue 的容量、跨 server 狀態版本重設（必須手動離線 / 新登入）、TLS / token rotation / auth rate limit。Token 只存在記憶體，但 Python 無法保證立即抹除。Transport 使用 WebSocket；只支援 polling 的網路環境尚未驗證。尚無 Admin GUI、Viewer migration 或 raw TCP adapter。
+
+## Coach 註冊擴充
+
+已新增 register_coach 與 join_coach {username,password}；原教練 token 僅對未認領席位有效，Admin 流程不變。帳號存於專題 SQLite 獨立表，不改 auction snapshot。以 [註冊說明](FINAL_PROJECT_REGISTRATION.md) 為最新操作與協定依據。

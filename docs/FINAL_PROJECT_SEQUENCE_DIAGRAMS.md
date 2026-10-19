@@ -9,8 +9,8 @@ sequenceDiagram
   participant C as Coach GUI
   participant T as Socket.IO Server
   C->>T: Engine.IO / Socket.IO connect
-  C->>T: join_coach {coachId, token}
-  T->>T: 驗證 token / 固定 SID 身份 / enter coach room
+  C->>T: join_coach {username, password}
+  T->>T: 驗證帳號 hash / DB 決定 Coach 身份 / enter coach room
   T-->>C: coach_state (完整自己的 projection)
   T-->>C: ACK {ok, payload.snapshot}
 ```
@@ -86,9 +86,34 @@ sequenceDiagram
   T->>T: transport close or heartbeat timeout; clear SID session
   C->>C: GUI offline; retain last snapshot; discard uncertain queued actions
   C->>T: reconnect (new SID)
-  C->>T: join_coach {coachId, token}
+  C->>T: join_coach {username, password}
   T-->>C: latest coach_state and join ACK snapshot
   C->>C: version guard; restore myBid / remaining / team / budget
 ```
 
 Viewer 以 `join_viewer {}` 重連；Admin 用 `join_admin {token}`。正常登出不一定自動重連；非預期中斷 worker 自動重試。Server 不暫停競標等待掉線者。
+
+## Coach 席位註冊
+
+```mermaid
+sequenceDiagram
+  participant C as Coach GUI background worker
+  participant T as Socket.IO Server
+  participant A as AccountStore
+  participant DB as Project SQLite
+  C->>T: connect (anonymous)
+  C->>T: register_coach {coachId, invite, username, password}
+  T->>T: validate invite / input / anonymous session
+  T->>A: register account and claim configured seat
+  A->>A: random salt / scrypt in worker thread
+  A->>DB: INSERT username + UNIQUE coach_id + salt + hash
+  DB-->>A: atomic commit or uniqueness conflict
+  A-->>T: registered or error
+  T->>T: disconnect previous token sessions for this seat
+  T-->>C: ACK (no password, no automatic role join)
+  C->>T: disconnect registration connection
+  C->>T: new connect + join_coach {username,password}
+  T-->>C: authenticated coach_state + ACK snapshot
+```
+
+未認領席位可相容舊 token 登入；認領後失效。錯誤或 ACK 遺失的處理見 [註冊文件](FINAL_PROJECT_REGISTRATION.md)。

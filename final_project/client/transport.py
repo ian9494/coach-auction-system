@@ -43,14 +43,17 @@ class Credentials:
     role: str
     coach_id: str = ''
     token: str = field(default='', repr=False)
+    username: str = ''
+    password: str = field(default='', repr=False)
 
     def validate(self):
         parsed = urlparse(self.url)
         if parsed.scheme not in ('http', 'https') or not parsed.hostname or parsed.username or parsed.password:
             raise ValueError('INVALID_LOGIN')
-        if self.role not in ('coach', 'admin', 'viewer') or (self.role != 'viewer' and not self.token):
+        account = self.role == 'coach' and bool(self.username) and bool(self.password)
+        if self.role not in ('coach', 'admin', 'viewer') or (self.role != 'viewer' and not self.token and not account):
             raise ValueError('INVALID_LOGIN')
-        if self.role == 'coach' and not self.coach_id.strip():
+        if self.role == 'coach' and not account and not self.coach_id.strip():
             raise ValueError('INVALID_LOGIN')
 
 
@@ -150,6 +153,8 @@ class ClientTransport:
                         data = {} if credentials.role == 'viewer' else {'token':credentials.token}
                         if credentials.role == 'coach':
                             data['coachId'] = credentials.coach_id
+                            if credentials.username:
+                                data = {'username': credentials.username, 'password': credentials.password}
                         ack = await c.call('join_' + credentials.role, data, timeout=self.ack_timeout)
                         if not ack.get('ok'):
                             self.events.put(TransportError('AUTH_FAILED'))

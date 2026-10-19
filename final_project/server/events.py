@@ -58,23 +58,29 @@ class SocketTransport:
             data = {}
         if not isinstance(data, dict):
             return self.error('INVALID_PAYLOAD')
+        account_login = role == 'coach' and set(data) == {'username', 'password'}
         expected = set() if role == 'viewer' else {'token'} if role == 'admin' else {'token', 'coachId'}
-        if set(data) != expected or (role != 'viewer' and not isinstance(data.get('token'), str)):
+        if not account_login and (set(data) != expected or (role != 'viewer' and not isinstance(data.get('token'), str))):
             return self.error('INVALID_PAYLOAD')
         coach_id = data.get('coachId') if role == 'coach' else None
-        if role == 'coach' and (not isinstance(coach_id, str) or coach_id not in self.runtime.auth.coach_tokens):
+        if role == 'coach' and not account_login and (not isinstance(coach_id, str) or coach_id not in self.runtime.auth.coach_tokens):
             return self.error('UNKNOWN_COACH')
         lock = self._session_locks.get(sid)
         if lock is None:
             return self.error('UNAUTHORIZED')
         async with lock:
+            if account_login:
+                coach_id = await self.runtime.accounts.authenticate(data['username'], data['password'])
+                if coach_id is None or coach_id not in self.runtime.auth.coach_tokens:
+                    return self.error('UNAUTHORIZED')
             session = await self.sio.get_session(sid)
             if session['joined'] and (session['role'], session['coach_id']) != (role, coach_id):
                 return self.error('FORBIDDEN')
-            if role != 'viewer' and not self.runtime.auth.check(role, data['token'], coach_id):
+            if not account_login and role != 'viewer' and (not self.runtime.auth.check(role, data['token'], coach_id)
+                    or (role == 'coach' and self.runtime.accounts.claimed(coach_id))):
                 return self.error('UNAUTHORIZED')
             await self.sio.save_session(sid, {'role': role, 'coach_id': coach_id,
-                'authenticated': True, 'joined': True})
+                'authenticated': True, 'joined': True, **({'account_login': True} if account_login else {})})
             room = f'coach:{coach_id}' if role == 'coach' else role
             await self.sio.enter_room(sid, room)
             snapshot = self.runtime.service.snapshot()
@@ -98,6 +104,8 @@ class SocketTransport:
             required = 'coach' if event == 'submit_bid' else 'admin'
             if session['role'] != required:
                 return self.error('FORBIDDEN', request_id)
+            if required == 'coach' and not session.get('account_login') and self.runtime.accounts.claimed(session['coach_id']):
+                return self.error('UNAUTHORIZED', request_id)
             if event == 'reset_auction':
                 return self.error('NOT_IMPLEMENTED', request_id)
             try:
@@ -113,6 +121,37 @@ class SocketTransport:
             return {**asdict(result), 'request_id': request_id}
 
     def register(self):
+        @self.sio.on('register_coach')
+        async def register_coach(sid, data=None, *extra):
+            if extra or not isinstance(data, dict) or set(data) != {'coachId', 'invite', 'username', 'password'}:
+                return self.error('INVALID_PAYLOAD')
+            lock = self._session_locks.get(sid)
+            if lock is None or not self.runtime.ready: return self.error('UNAUTHORIZED')
+            async with lock:
+                try:
+                    session = await self.sio.get_session(sid)
+                    if session['joined']: return self.error('FORBIDDEN')
+                    cid = data['coachId']
+                    if not isinstance(cid, str) or not self.runtime.auth.check('coach', data['invite'], cid):
+                        return self.error('INVALID_INVITE')
+                    error = await self.runtime.accounts.register(data['username'], data['password'], cid)
+                    if error: return self.error(error)
+                    # Revoke pre-claim token sessions so they cannot keep receiving private bids.
+                    for other in list(self._session_locks):
+                        if other == sid: continue
+                        try:
+                            old = await self.sio.get_session(other)
+                        except KeyError:
+                            continue
+                        if old.get('role') == 'coach' and old.get('coach_id') == cid and not old.get('account_login'):
+                            await self.sio.disconnect(other)
+                    result = self.error(None)
+                    return {**result, 'ok': True, 'message': 'REGISTERED',
+                            'payload': {'coachId': cid, 'username': data['username'].lower()}}
+                except Exception:
+                    logger.warning('Coach registration failed')
+                    return self.error('INTERNAL_ERROR')
+
         @self.sio.on('connect')
         async def connect(sid, environ, auth=None):
             if not self.runtime.ready:

@@ -5,6 +5,8 @@ from tkinter import ttk
 
 from .transport import ClientTransport, Credentials
 from .coach_viewmodel import CoachViewModel, parse_amount
+from .registration import RegistrationWorker
+from final_project.storage.accounts import valid_account
 
 
 class CoachApp:
@@ -13,6 +15,7 @@ class CoachApp:
         self.transport = None
         self.model = CoachViewModel()
         self.closing = False
+        self.registration = None
         root.title('期末專題 · Coach 競標客戶端')
         root.geometry('1000x720')
         root.minsize(850, 600)
@@ -24,10 +27,19 @@ class CoachApp:
         self.url = tk.StringVar(value='http://127.0.0.1:3001')
         self.coach_id = tk.StringVar(value='coach01')
         self.token = tk.StringVar()
-        for index, (label, value, width) in enumerate((('Server URL',self.url,32),('Coach ID',self.coach_id,12),('Token',self.token,24))):
+        for index, (label, value, width) in enumerate((('Server URL',self.url,32),('Coach ID',self.coach_id,12),('邀請碼／舊 Token',self.token,24))):
             ttk.Label(login, text=label).grid(row=0, column=index*2, padx=4)
-            ttk.Entry(login, textvariable=value, width=width, show='*' if label == 'Token' else '').grid(row=0, column=index*2+1, padx=4)
-        self.connect_button = ttk.Button(login, text='連線', command=self.connect)
+            ttk.Entry(login, textvariable=value, width=width, show='*' if value is self.token else '').grid(row=0, column=index*2+1, padx=4)
+        self.username = tk.StringVar()
+        self.password = tk.StringVar()
+        self.confirm_password = tk.StringVar()
+        for index, (label, value) in enumerate((('帳號',self.username),('密碼',self.password),('確認密碼（註冊）',self.confirm_password))):
+            ttk.Label(login, text=label).grid(row=2, column=index*2, padx=4)
+            ttk.Entry(login, textvariable=value, width=20, show='' if value is self.username else '*').grid(row=2, column=index*2+1, padx=4)
+        self.register_button = ttk.Button(login, text='註冊教練席位', command=self.register_account)
+        self.register_button.grid(row=3, column=0, pady=8)
+        ttk.Label(login, text='帳號 4–32 位英數／底線；密碼 10–128 字元。註冊後使用帳號密碼登入。').grid(row=3, column=1, columnspan=5, sticky='w')
+        self.connect_button = ttk.Button(login, text='登入', command=self.connect)
         self.connect_button.grid(row=1, column=0, pady=8)
         self.disconnect_button = ttk.Button(login, text='離線', command=self.disconnect, state='disabled')
         self.disconnect_button.grid(row=1, column=1, sticky='w')
@@ -71,21 +83,45 @@ class CoachApp:
         root.after(50, self.poll)
 
     def connect(self):
-        if self.transport is not None:
+        if self.transport is not None or self.registration is not None:
             return
         transport = ClientTransport()
         try:
-            credentials = Credentials(self.url.get().strip(), 'coach', self.coach_id.get().strip(), self.token.get())
+            username = self.username.get().strip()
+            if username and not valid_account(username, self.password.get()):
+                raise ValueError('INVALID_ACCOUNT')
+            credentials = Credentials(self.url.get().strip(), 'coach', self.coach_id.get().strip(), self.token.get(),
+                                      username, self.password.get())
             transport.connect(credentials)
         except (ValueError, RuntimeError):
-            self.message.set('請確認 URL、教練 ID 與 Token 已填寫。')
+            self.message.set('請確認 URL、帳號密碼，或未註冊席位的教練 ID 與 Token。')
             return
         self.model = CoachViewModel()
         self._rendered = None
         self.transport = transport
         self.token.set('')
+        self.password.set('')
+        self.confirm_password.set('')
+        self.register_button.configure(state='disabled')
         self.connect_button.configure(state='disabled')
         self.disconnect_button.configure(state='normal')
+
+    def register_account(self):
+        if self.transport is not None or self.registration is not None: return
+        username, password = self.username.get().strip(), self.password.get()
+        if not valid_account(username, password) or password != self.confirm_password.get():
+            self.model.message = '請確認帳號格式、密碼長度及兩次密碼一致。'
+            return
+        try:
+            worker = RegistrationWorker(self.url.get().strip(), self.coach_id.get().strip(), self.token.get(), username, password)
+            worker.start()
+        except (ValueError, RuntimeError):
+            self.model.message = '請確認 Server URL。'
+            return
+        self.registration = worker
+        self.register_button.configure(state='disabled')
+        self.connect_button.configure(state='disabled')
+        self.model.message = '註冊中，等待 Server 確認…'
 
     def disconnect(self):
         if self.transport:
@@ -103,6 +139,23 @@ class CoachApp:
         self.model.message = '送出中，等待 Server 確認…'
 
     def poll(self):
+        if self.registration is not None:
+            try:
+                result = self.registration.events.get_nowait()
+            except Empty:
+                pass
+            else:
+                self.registration = None
+                self.connect_button.configure(state='normal')
+                self.register_button.configure(state='normal')
+                messages = {'INVALID_INVITE':'邀請碼錯誤，請確認教練席位。',
+                    'ACCOUNT_OR_SEAT_TAKEN':'帳號或席位已被註冊，請登入或聯絡管理員。',
+                    'INVALID_ACCOUNT':'帳號或密碼格式不正確。',
+                    'REGISTRATION_UNCONFIRMED':'未確認註冊結果；請先嘗試登入，不自動重送註冊。'}
+                self.model.message = '註冊完成，請按登入。' if result.get('ok') else messages.get(result.get('error_code'), '註冊失敗，請確認 Server。')
+                if result.get('ok'):
+                    self.token.set('')
+                    self.confirm_password.set('')
         if self.transport:
             # Bound work per UI tick so a busy inbound queue cannot freeze widgets.
             for _ in range(100):
@@ -114,6 +167,7 @@ class CoachApp:
                 self.transport = None
                 self.connect_button.configure(state='normal')
                 self.disconnect_button.configure(state='disabled')
+                self.register_button.configure(state='normal')
         if self.closing:
             if self.transport is None:
                 self.root.destroy()

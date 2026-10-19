@@ -12,6 +12,7 @@ import socketio
 from final_project.config import ProjectConfig, load_launch_config
 from final_project.domain.models import AuctionState, Coach, Player
 from final_project.storage.repository import SQLiteRepository
+from final_project.storage.accounts import AccountStore
 from .auth import AuthConfig
 from .events import SocketTransport
 from .http_api import register_http
@@ -26,6 +27,7 @@ class Runtime:
     service: AuctionService | None = None
     auth: AuthConfig | None = None
     ready: bool = False
+    accounts: AccountStore | None = None
 
 
 def load_roster(config: ProjectConfig) -> AuctionState:
@@ -63,6 +65,7 @@ def create_app(config: ProjectConfig | None = None, auth: AuthConfig | None = No
         repository = SQLiteRepository(config)
         tasks, queue = [], None
         try:
+            runtime.accounts = AccountStore(config)
             runtime.service = await AuctionService.open(repository, initial, clock=clock, timer=timer, rng=rng)
             queue = runtime.service.subscribe()
             runtime.ready = True
@@ -100,6 +103,9 @@ def create_app(config: ProjectConfig | None = None, auth: AuthConfig | None = No
                 try:
                     await sio.shutdown()
                 finally:
+                    if runtime.accounts is not None:
+                        runtime.accounts.close()
+                        runtime.accounts = None
                     repository.close()
                     runtime.service = None
 

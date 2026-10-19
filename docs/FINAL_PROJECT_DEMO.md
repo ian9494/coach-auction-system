@@ -43,7 +43,7 @@ Viewer：`http://127.0.0.1:3001/final-project/viewer.html`；結果 `/final-proj
 8. Coach 斷線再登入，恢復 myBid／倒數／預算。Viewer 重新整理或網路恢復後取得 snapshot。
 9. 故障展示：停止 Server，再用同一 demoRoot 啟動。GUI 顯示離線後重新認證；running deadline 已過期即結算一次，paused 保留。Client 不自動重送不確定命令，先檢查 snapshot。
 
-Player01／Player09 可展示 zone1／2。規則詳見 [baseline](FINAL_PROJECT_RULES_BASELINE.md)。自由註冊、在線 roster import、安全 reset、presence 未實作；新名單只能在新 session 啟動前準備，不更改已運作 roster 順序。
+Player01／Player09 可展示 zone1／2。規則詳見 [baseline](FINAL_PROJECT_RULES_BASELINE.md)。Coach 席位帳密註冊已實作（見下方補充）；在線 roster import、安全 reset、presence 未實作；新名單只能在新 session 啟動前準備，不更改已運作 roster 順序。
 
 ## OBS
 
@@ -71,3 +71,7 @@ Acceptance 重用 tests/test_integration_lifecycle.py：1 Admin、8 Coach、1 Vi
 ## Phase 6 交付驗證（2026-10-11）
 
 最終完整 pytest 連續兩次各 285 passed（含 Edge browser，無 skip）；28 個 Python modules import 成功、PowerShell Server script syntax 成功。wheel 101 entries，無 credentials／SQLite runtime；全新 venv 安裝及 repository 外 cwd 的 installed-package smoke 通過。wheel 約 77 MB，保留既有圖片。git diff --check 成功，legacy server／GUI／Viewer 與 data/ 無改動。課程註冊語意／raw TCP 須確認；OBS CEF、實機多 GUI／跨機網路仍須課前預演。
+
+## 註冊展示補充
+
+原 coach_tokens 的值現在也作為一次性席位邀請碼。Coach GUI 填 Coach ID／邀請碼／帳號／密碼／確認密碼，按註冊，再按登入。認領後原 token 失效，重連／重啟以帳密登入。請用全新 demo root 展示，完整流程見 [註冊](FINAL_PROJECT_REGISTRATION.md)。上方 Phase 6 的 285 tests 為新增註冊前的歷史驗證紀錄。

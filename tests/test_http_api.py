@@ -21,7 +21,10 @@ def test_http_read_api_no_private_state_and_lifecycle(tmp_path):
                 await coach.call('submit_bid',request(app,'bid',amount=213))
                 view=(await http.get('/api/state/viewer')).json()
                 assert view['status']=='running' and not keys(view)&FORBIDDEN
-                assert '213' not in str(view)
+                # UUID round IDs can contain the digits of a sealed bid by chance.
+                # Check the public contract rather than arbitrary serialized text.
+                assert view['winner'] is None and view['winning_amount'] is None
+                assert set(view['budgets'].values()) == {1000}
                 await admin.call('end_auction',request(app,'end'))
                 assert (await http.get('/api/results')).json()==[{'playerName':'Player17','coachId':'coach01','amount':213}]
                 assert 'Player17' not in (await http.get('/api/members')).json()

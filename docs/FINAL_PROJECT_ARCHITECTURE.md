@@ -5,7 +5,7 @@ flowchart LR
   A[Python Tkinter Admin] --> T[Socket.IO / ASGI]
   C[Python Tkinter Coach] --> T
   V[Web Viewer / OBS] --> T
-  T --> Auth[Token identity / role]
+  T --> Auth[Account or token identity / role]
   Auth --> S[AuctionService serialized commands]
   S --> D[Pure Python Domain]
   S --> DB[SQLite atomic snapshot + request ACK]
@@ -18,7 +18,7 @@ flowchart LR
 
 Client 的 Tk 主執行緒負責 UI；背景 asyncio worker 使用 Socket.IO，Queue 傳遞命令／事件，避免網路阻塞 GUI。View model 使用 Server snapshot 的 version；ACK 表示命令結果，不能當成本地競標狀態。重連重新登入並取完整 snapshot，不自动重送不確定命令。
 
-Transport（`final_project/server/events.py`、`schemas.py`）驗證資料形狀、已認證 session 與角色。Token 由環境變數或明確指定的 demo root 提供，未配置拒絕啟動；不寫入日誌。教練只能代表自己的隊伍出價，Viewer 無修改權。
+Transport（`final_project/server/events.py`、`schemas.py`）驗證資料形狀、已認證 session 與角色。Admin token／教練邀請碼由環境變數或明確指定的 demo root 提供，未配置拒絕啟動；Coach 可認領席位並以帳密登入，帳密不寫入日誌。教練只能代表自己的隊伍出價，Viewer 無修改權。
 
 Projection 是密封競標的資料邊界：Admin 得到全部 bids，Coach 得到自己的 myBid，Viewer 僅公開狀態、倒數、隊伍、預算與已結算結果。HTTP 沒有完整內部 state API。詳見 [協定](FINAL_PROJECT_PROTOCOL.md)。
 
@@ -29,3 +29,7 @@ AuctionService 是唯一狀態寫入者，以 lock 序列化命令，呼叫無 I
 FastAPI 提供 read-only API 與限定靜態路徑，Uvicorn 單 worker 執行。Viewer 本地 vendor JS，無需 CDN；wheel 資產位於環境 prefix 的 `share/coach-auction-final-project/`，runtime 與只讀資產分離。原 Node／legacy public 保留，Python 不讀正式 `data/`。
 
 目前為單一競標 session／8 隊，不支援多 server worker 或分散式鎖。SQLite 同步寫入、小型課堂規模適用。可維護 raw TCP adapter，但本輪不加入。
+
+## Coach 註冊擴充
+
+已新增 register_coach 與 join_coach {username,password}；原教練 token 僅對未認領席位有效，Admin 流程不變。帳號存於專題 SQLite 獨立表，不改 auction snapshot。以 [註冊說明](FINAL_PROJECT_REGISTRATION.md) 為最新操作與協定依據。

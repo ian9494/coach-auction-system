@@ -3,6 +3,7 @@ import asyncio
 import hashlib
 from pathlib import Path
 import socket
+import secrets
 import sys
 import tempfile
 
@@ -54,6 +55,12 @@ async def run(root):
                 coach_id = 'coach01' if len(clients) == 2 else 'coach02'
                 payload = {} if role == 'viewer' else {'token': auth.admin_token} if role == 'admin' else {
                     'coachId': coach_id, 'token': auth.coach_tokens[coach_id]}
+                if role == 'coach' and len(clients) == 2:
+                    password = secrets.token_urlsafe(24)
+                    registered = await c.call('register_coach', {'coachId':coach_id,
+                        'invite':auth.coach_tokens[coach_id], 'username':'wheel_coach', 'password':password})
+                    assert registered['ok']
+                    payload = {'username':'wheel_coach', 'password':password}
                 assert (await c.call('join_' + role, payload))['ok']
             start = await clients[0].call('start_auction', {'request_id':'start', 'playerName':'Player17', 'duration':10})
             assert start['ok']
@@ -75,7 +82,7 @@ async def run(root):
         try: await asyncio.wait_for(task, 10)
         finally: sock.close()
     assert app.runtime.service is None
-    print('PASS: wheel imports, installed assets/vendor hash, ephemeral server, auth, sealed bids, settlement, HTTP results and isolated SQLite')
+    print('PASS: wheel imports, installed assets/vendor hash, ephemeral server, registration/login, auth, sealed bids, settlement, HTTP results and isolated SQLite')
 
 
 if __name__ == '__main__':
