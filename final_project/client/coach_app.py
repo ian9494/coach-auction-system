@@ -6,6 +6,7 @@ from tkinter import ttk
 from .transport import ClientTransport, Credentials
 from .coach_viewmodel import CoachViewModel, parse_amount
 from .registration import RegistrationWorker
+from .theme import apply_theme, Card, LoginPanel, create_header, create_body
 from final_project.storage.accounts import valid_account
 
 
@@ -16,63 +17,95 @@ class CoachApp:
         self.model = CoachViewModel()
         self.closing = False
         self.registration = None
+        apply_theme(root)
         root.title('期末專題 · Coach 競標客戶端')
-        root.geometry('1000x720')
-        root.minsize(850, 600)
+        root.geometry('1100x760')
+        root.minsize(1000, 720)
         root.protocol('WM_DELETE_WINDOW', self.close)
-        body = ttk.Frame(root, padding=16)
-        body.pack(fill='both', expand=True)
-        login = ttk.LabelFrame(body, text='連線與驗證', padding=10)
-        login.pack(fill='x')
+        body = create_body(root, padding=16)
+        self.identity = tk.StringVar(value='Coach01 · 教練席位')
+        create_header(body, self.identity, 'COACH AUCTION  /  登入後即可出價 · 註冊帳號會綁定教練席位')
+        self.login_panel = LoginPanel(body, '連線與帳號')
+        self.login_panel.pack(fill='x')
+        login = self.login_panel.content
         self.url = tk.StringVar(value='http://127.0.0.1:3001')
         self.coach_id = tk.StringVar(value='coach01')
         self.token = tk.StringVar()
-        for index, (label, value, width) in enumerate((('Server URL',self.url,32),('Coach ID',self.coach_id,12),('邀請碼／舊 Token',self.token,24))):
-            ttk.Label(login, text=label).grid(row=0, column=index*2, padx=4)
-            ttk.Entry(login, textvariable=value, width=width, show='*' if value is self.token else '').grid(row=0, column=index*2+1, padx=4)
         self.username = tk.StringVar()
         self.password = tk.StringVar()
         self.confirm_password = tk.StringVar()
-        for index, (label, value) in enumerate((('帳號',self.username),('密碼',self.password),('確認密碼（註冊）',self.confirm_password))):
-            ttk.Label(login, text=label).grid(row=2, column=index*2, padx=4)
-            ttk.Entry(login, textvariable=value, width=20, show='' if value is self.username else '*').grid(row=2, column=index*2+1, padx=4)
-        self.register_button = ttk.Button(login, text='註冊教練席位', command=self.register_account)
-        self.register_button.grid(row=3, column=0, pady=8)
-        ttk.Label(login, text='帳號 4–32 位英數／底線；密碼 10–128 字元。註冊後使用帳號密碼登入。').grid(row=3, column=1, columnspan=5, sticky='w')
-        self.connect_button = ttk.Button(login, text='登入', command=self.connect)
-        self.connect_button.grid(row=1, column=0, pady=8)
-        self.disconnect_button = ttk.Button(login, text='離線', command=self.disconnect, state='disabled')
-        self.disconnect_button.grid(row=1, column=1, sticky='w')
+        server = ttk.Frame(login)
+        server.pack(fill='x', pady=(0,8))
+        ttk.Label(server, text='Server URL').pack(side='left')
+        ttk.Entry(server, textvariable=self.url, width=40).pack(side='left', padx=10)
+        self.auth_tabs = ttk.Notebook(login)
+        self.auth_tabs.pack(fill='x')
+        self.login_tab = ttk.Frame(self.auth_tabs, padding=10)
+        self.registration_tab = ttk.Frame(self.auth_tabs, padding=10)
+        self.token_tab = ttk.Frame(self.auth_tabs, padding=10)
+        self.auth_tabs.add(self.login_tab, text='帳密登入')
+        self.auth_tabs.add(self.registration_tab, text='首次註冊')
+        self.auth_tabs.add(self.token_tab, text='快速 Demo（未註冊席位）')
+        def fields(frame, items):
+            for column, (label, variable, secret) in enumerate(items):
+                ttk.Label(frame, text=label).grid(row=0, column=column, sticky='w', padx=5)
+                ttk.Entry(frame, textvariable=variable, show='*' if secret else '', width=23).grid(row=1, column=column, sticky='ew', padx=5, pady=5)
+                frame.columnconfigure(column, weight=1)
+        fields(self.login_tab, [('帳號',self.username,False), ('密碼',self.password,True)])
+        ttk.Label(self.login_tab, text='已註冊的帳號只需帳密；席位由 Server 判定。', style='Muted.TLabel').grid(row=2,column=0,columnspan=2,sticky='w',padx=5)
+        fields(self.registration_tab, [('Coach ID',self.coach_id,False), ('席位邀請碼',self.token,True), ('帳號',self.username,False)])
+        for column, (label, variable) in enumerate([('密碼', self.password), ('確認密碼', self.confirm_password)]):
+            ttk.Label(self.registration_tab, text=label).grid(row=2,column=column,sticky='w',padx=5)
+            ttk.Entry(self.registration_tab,textvariable=variable,show='*',width=23).grid(row=3,column=column,sticky='ew',padx=5,pady=5)
+        self.register_button = ttk.Button(self.registration_tab, text='註冊教練席位', command=self.register_account, style='Primary.TButton')
+        self.register_button.grid(row=3,column=2,padx=5,pady=5,sticky='ew')
+        ttk.Label(self.registration_tab, text='帳號 4–32 位英數／底線；密碼 10–128 字元。註冊成功後切回帳密登入。', style='Muted.TLabel').grid(row=4,column=0,columnspan=3,sticky='w',padx=5)
+        fields(self.token_tab, [('Coach ID',self.coach_id,False), ('邀請碼／舊 Token',self.token,True)])
+        ttk.Label(self.token_tab, text='僅限未註冊席位；使用此方式時，帳密登入分頁的帳號需留空。', style='Muted.TLabel').grid(row=2,column=0,columnspan=2,sticky='w',padx=5)
+        actions = ttk.Frame(login)
+        actions.pack(fill='x', pady=(10,0))
+        self.connect_button = ttk.Button(actions, text='登入', command=self.connect, style='Primary.TButton')
+        self.connect_button.pack(side='left')
+        self.disconnect_button = ttk.Button(actions, text='離線', command=self.disconnect, state='disabled')
+        self.disconnect_button.pack(side='left', padx=8)
         self.connection = tk.StringVar(value='離線')
-        ttk.Label(login, textvariable=self.connection).grid(row=1, column=2, columnspan=4, sticky='w')
+        self.connection_label = ttk.Label(body, textvariable=self.connection, style='Offline.TLabel')
+        self.connection_label.pack(anchor='w', pady=(4, 8))
+        def update_seat(*_):
+            if self.model.connection != 'connected':
+                seat = self.coach_id.get().upper()
+                root.title(f'{seat} · 教練競標')
+                self.identity.set(f'{seat} · 教練席位')
+        self.coach_id.trace_add('write', update_seat)
+        update_seat()
         middle = ttk.Frame(body)
         middle.pack(fill='x', pady=12)
-        auction = ttk.LabelFrame(middle, text='當前競標', padding=12)
+        auction = Card(middle, text='當前競標', padding=12)
         auction.pack(side='left', fill='both', expand=True)
-        info = ttk.LabelFrame(middle, text='我的預算與規則', padding=12)
+        info = Card(middle, text='我的預算與規則', padding=12)
         info.pack(side='left', fill='both', expand=True, padx=(12,0))
         self.auction_text = tk.StringVar(value='等待競標資訊')
         self.rules_text = tk.StringVar(value='登入後取得資訊')
-        ttk.Label(auction, textvariable=self.auction_text, justify='left', font=('',12)).pack(anchor='w')
+        ttk.Label(auction, textvariable=self.auction_text, justify='left', style='Hero.TLabel').pack(anchor='w')
         ttk.Label(info, textvariable=self.rules_text, justify='left').pack(anchor='w')
         bid = ttk.Frame(auction)
         bid.pack(anchor='w', pady=12)
         self.amount = tk.StringVar()
         ttk.Entry(bid, textvariable=self.amount, width=15).pack(side='left')
-        self.submit_button = ttk.Button(bid, text='送出／修改出價', command=self.submit, state='disabled')
+        self.submit_button = ttk.Button(bid, text='送出／修改出價', command=self.submit, state='disabled', style='Primary.TButton')
         self.submit_button.pack(side='left', padx=8)
         self.bid_status = tk.StringVar(value='尚未出價')
         ttk.Label(auction, textvariable=self.bid_status).pack(anchor='w')
         bottom = ttk.Frame(body)
         bottom.pack(fill='both', expand=True)
-        team = ttk.LabelFrame(bottom, text='我的隊伍', padding=8)
+        team = Card(bottom, text='我的隊伍', padding=8)
         team.pack(side='left', fill='both', expand=True)
-        summary = ttk.LabelFrame(bottom, text='公開教練資訊', padding=8)
+        summary = Card(bottom, text='公開教練資訊', padding=8)
         summary.pack(side='left', fill='both', expand=True, padx=(12,0))
-        self.team = ttk.Treeview(team, columns=('player',), show='headings', height=8)
+        self.team = ttk.Treeview(team, columns=('player',), show='headings', height=4)
         self.team.heading('player', text='已獲得選手')
         self.team.pack(fill='both', expand=True)
-        self.summary = ttk.Treeview(summary, columns=('name','budget','count'), show='headings', height=8)
+        self.summary = ttk.Treeview(summary, columns=('name','budget','count'), show='headings', height=4)
         for key, title in (('name','教練'),('budget','剩餘預算'),('count','隊伍人數')):
             self.summary.heading(key, text=title)
             self.summary.column(key, width=110)
@@ -154,6 +187,7 @@ class CoachApp:
                     'REGISTRATION_UNCONFIRMED':'未確認註冊結果；請先嘗試登入，不自動重送註冊。'}
                 self.model.message = '註冊完成，請按登入。' if result.get('ok') else messages.get(result.get('error_code'), '註冊失敗，請確認 Server。')
                 if result.get('ok'):
+                    self.auth_tabs.select(self.login_tab)
                     self.token.set('')
                     self.confirm_password.set('')
         if self.transport:
@@ -179,6 +213,12 @@ class CoachApp:
         connection = {'offline':'離線','connecting':'連線中','reconnecting':'重連中','connected':'已連線'}
         s = self.model.snapshot or {}
         coach = s.get('coach', {})
+        self.login_panel.set_connected(self.model.connection == 'connected')
+        self.connection_label.configure(style='Online.TLabel' if self.model.connection == 'connected' else 'Offline.TLabel')
+        if coach.get('id') and self.model.connection == 'connected':
+            title = f"{coach['id'].upper()} · {coach.get('name', '')}"
+            self.identity.set(title)
+            self.root.title(title + ' · 教練競標')
         self.connection.set(f"{connection.get(self.model.connection, '離線')} · {coach.get('name','')} {coach.get('id','')}")
         status = {'idle':'等待','running':'競標中','paused':'競標暫停','ended':'已結束'}
         text = f"選手：{s.get('current_player') or '—'}\n狀態：{status.get(s.get('status'),'等待')}\n倒數：{self.model.countdown} 秒\nMinimum Bid：{s.get('minimum_bid',0)}"
