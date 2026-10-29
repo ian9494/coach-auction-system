@@ -206,9 +206,20 @@ class CoachApp:
         self.disconnect()
 
 
-def main():
+def main(argv=None):
+    import argparse
+    import os
+    parser = argparse.ArgumentParser(description='Auction GUI login prefill')
+    parser.add_argument('--server', default='http://127.0.0.1:3001')
+    parser.add_argument('--coach-id', default='coach01')
+    parser.add_argument('--token')
+    args = parser.parse_args(argv)
     root = tk.Tk()
-    CoachApp(root)
+    app = CoachApp(root)
+    app.url.set(args.server)
+    app.coach_id.set(args.coach_id)
+    app.token.set(args.token if args.token is not None else os.environ.get(
+        'FINAL_PROJECT_COACH_TOKEN_' + args.coach_id.upper(), ''))
     root.mainloop()
 
 

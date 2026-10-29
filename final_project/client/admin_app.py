@@ -198,10 +198,20 @@ class AdminApp:
         self.disconnect()
 
 
-def main():
+def main(argv=None):
+    import argparse
+    import os
+    parser = argparse.ArgumentParser(description='Auction GUI login prefill')
+    parser.add_argument('--server', default='http://127.0.0.1:3001')
+    parser.add_argument('--admin-token')
+    args = parser.parse_args(argv)
     root = tk.Tk()
-    AdminApp(root)
+    app = AdminApp(root)
+    app.url.set(args.server)
+    app.token.set(args.admin_token if args.admin_token is not None else
+                  os.environ.get('FINAL_PROJECT_ADMIN_TOKEN', ''))
     root.mainloop()
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
