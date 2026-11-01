@@ -14,6 +14,10 @@ def test_tk_registration_login_logout(tmp_path):
             root = tk.Tk()
             root.withdraw()
             app = CoachApp(root)
+            app.coach_id.set('coach01')
+            assert 'COACH01' in root.title()
+            assert len(app.auth_tabs.tabs()) == 3
+            app.auth_tabs.select(app.registration_tab)
             app.url.set(r.url)
             app.username.set('gui_user')
             app.password.set(PASSWORD)
@@ -30,12 +34,18 @@ def test_tk_registration_login_logout(tmp_path):
                         await asyncio.sleep(.01)
                 assert app.model.message == '註冊完成，請按登入。'
                 assert app.token.get() == ''
+                assert app.auth_tabs.select() == str(app.login_tab)
                 app.connect()
                 async with asyncio.timeout(10):
                     while app.model.connection != 'connected':
                         root.update()
                         await asyncio.sleep(.01)
                 assert app.model.snapshot['coach']['id'] == 'coach01'
+                assert not app.login_panel.expanded
+                app.login_panel.toggle.invoke()
+                assert app.login_panel.expanded
+                app.login_panel.toggle.invoke()
+                assert not app.login_panel.expanded
                 assert not app.password.get()
                 app.disconnect()
                 async with asyncio.timeout(10):
@@ -43,6 +53,7 @@ def test_tk_registration_login_logout(tmp_path):
                         root.update()
                         await asyncio.sleep(.01)
                 assert app.model.connection == 'offline'
+                assert app.login_panel.expanded
             finally:
                 if app.transport:
                     app.transport.disconnect()

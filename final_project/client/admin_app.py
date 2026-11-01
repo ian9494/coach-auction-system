@@ -6,6 +6,7 @@ from tkinter import ttk, messagebox, filedialog
 from .transport import ClientTransport, Credentials, ConnectionChanged, SnapshotReceived, HttpDataReceived, TransportError
 from .admin_viewmodel import AdminViewModel
 from .results_export import export_results
+from .theme import apply_theme, Card, LoginPanel, create_header, create_body
 
 
 class AdminApp:
@@ -17,33 +18,36 @@ class AdminApp:
         self._members_signature = None
         self._rendered = None
         self._export_requested = False
+        apply_theme(root)
         root.title('期末專題 · Admin 競標管理')
-        root.geometry('1150x800')
-        root.minsize(1000,700)
+        root.geometry('1280x760')
+        root.minsize(1150,720)
         root.protocol('WM_DELETE_WINDOW', self.close)
-        body = ttk.Frame(root,padding=12)
-        body.pack(fill='both',expand=True)
-        login = ttk.LabelFrame(body,text='Admin 登入',padding=8)
-        login.pack(fill='x')
+        body = create_body(root, padding=12)
+        create_header(body, '競標控制中心', 'ADMIN  /  管理場次、監看出價與匯出結果')
+        self.login_panel = LoginPanel(body, 'Admin 登入')
+        self.login_panel.pack(fill='x')
+        login = self.login_panel.content
         self.url = tk.StringVar(value='http://127.0.0.1:3001')
         self.token = tk.StringVar()
         ttk.Label(login,text='Server URL').pack(side='left')
         ttk.Entry(login,textvariable=self.url,width=32).pack(side='left',padx=8)
         ttk.Label(login,text='Admin Token').pack(side='left')
         ttk.Entry(login,textvariable=self.token,show='*',width=28).pack(side='left',padx=8)
-        self.connect_button = ttk.Button(login,text='連線',command=self.connect)
+        self.connect_button = ttk.Button(login,text='連線',command=self.connect,style='Primary.TButton')
         self.connect_button.pack(side='left')
         self.disconnect_button = ttk.Button(login,text='離線',command=self.disconnect,state='disabled')
         self.disconnect_button.pack(side='left',padx=8)
         self.connection = tk.StringVar(value='離線')
-        ttk.Label(body,textvariable=self.connection).pack(anchor='w',pady=6)
+        self.connection_label = ttk.Label(body,textvariable=self.connection,style='Offline.TLabel')
+        self.connection_label.pack(anchor='w',pady=8)
         middle = ttk.Frame(body)
         middle.pack(fill='both',expand=True)
-        control = ttk.LabelFrame(middle,text='競標控制',padding=10)
+        control = Card(middle,text='競標控制',padding=10)
         control.pack(side='left',fill='y')
-        auction = ttk.LabelFrame(middle,text='目前競標',padding=10)
+        auction = Card(middle,text='目前競標',padding=10)
         auction.pack(side='left',fill='both',expand=True,padx=8)
-        monitor = ttk.LabelFrame(middle,text='全部教練出價監看',padding=8)
+        monitor = Card(middle,text='全部教練出價監看',padding=8)
         monitor.pack(side='left',fill='both',expand=True)
         self.player = tk.StringVar()
         self.player_box = ttk.Combobox(control,textvariable=self.player,state='readonly',width=22)
@@ -55,28 +59,30 @@ class AdminApp:
         ttk.Entry(control,textvariable=self.duration,width=12).pack(fill='x')
         self.buttons = {}
         for event,label in (('start_auction','開始競標'),('pause_auction','暫停'),('resume_auction','繼續'),('end_auction','強制結算')):
-            button = ttk.Button(control,text=label,command=lambda e=event:self.command(e),state='disabled')
+            button = ttk.Button(control,text=label,command=lambda e=event:self.command(e),state='disabled',style='Danger.TButton' if event == 'end_auction' else 'Primary.TButton' if event == 'start_auction' else 'TButton')
             button.pack(fill='x',pady=4)
             self.buttons[event] = button
         self.minimum = tk.StringVar(value='0')
         self.budget = tk.StringVar(value='100')
         for event,label,value in (('set_minimum_bid','套用 Minimum Bid',self.minimum),('add_all_budgets','全體增加預算',self.budget)):
             ttk.Entry(control,textvariable=value,width=12).pack(fill='x',pady=(8,0))
-            button = ttk.Button(control,text=label,command=lambda e=event:self.command(e),state='disabled')
+            button = ttk.Button(control,text=label,command=lambda e=event:self.command(e),state='disabled',style='Danger.TButton' if event == 'end_auction' else 'Primary.TButton' if event == 'start_auction' else 'TButton')
             button.pack(fill='x',pady=4)
             self.buttons[event] = button
-        undo = ttk.Button(control,text='撤銷上一筆得標',command=lambda:self.command('undo_last_award'),state='disabled')
+        ttk.Separator(control).pack(fill='x',pady=(16,8))
+        ttk.Label(control,text='管理操作 · 請確認後使用',style='Muted.TLabel').pack(anchor='w')
+        undo = ttk.Button(control,text='撤銷上一筆得標',style='Danger.TButton',command=lambda:self.command('undo_last_award'),state='disabled')
         undo.pack(fill='x',pady=8)
         self.buttons['undo_last_award'] = undo
         ttk.Label(control,text='Reset／匯入：留待後續階段').pack(anchor='w')
         self.auction_text = tk.StringVar(value='等待 Server 資訊')
-        ttk.Label(auction,textvariable=self.auction_text,justify='left',wraplength=240,font=('',11)).pack(anchor='w')
+        ttk.Label(auction,textvariable=self.auction_text,justify='left',wraplength=240,style='Hero.TLabel').pack(anchor='w')
         self.bids = ttk.Treeview(monitor,columns=('coach','bid','budget','count','status'),show='headings',height=10)
         for key,title,width in (('coach','教練',85),('bid','出價',55),('budget','預算',65),('count','人數',45),('status','規則狀態',100)):
             self.bids.heading(key,text=title)
             self.bids.column(key,width=width)
         self.bids.pack(fill='both',expand=True)
-        teams = ttk.LabelFrame(body,text='隊伍／結果摘要',padding=8)
+        teams = Card(body,text='隊伍／結果摘要',padding=8)
         teams.pack(fill='both',expand=True,pady=8)
         self.teams = ttk.Treeview(teams,columns=('coach','players','budget','count'),show='headings',height=5)
         for key,title,width in (('coach','教練',120),('players','已得標玩家',550),('budget','剩餘預算',120),('count','人數',80)):
@@ -173,6 +179,8 @@ class AdminApp:
 
     def render(self):
         s = self.model.snapshot or {}
+        self.login_panel.set_connected(self.model.connection == 'connected')
+        self.connection_label.configure(style='Online.TLabel' if self.model.connection == 'connected' else 'Offline.TLabel')
         state = {'connected':'已連線','connecting':'連線中','reconnecting':'重連中','offline':'離線'}.get(self.model.connection,'離線')
         self.connection.set(f"Admin · {state} · version {self.model.latest_version} · round {s.get('round_id') or '—'}")
         status = {'idle':'等待','running':'競標中','paused':'暫停','ended':'已結束'}.get(s.get('status'),'等待')
@@ -198,10 +206,20 @@ class AdminApp:
         self.disconnect()
 
 
-def main():
+def main(argv=None):
+    import argparse
+    import os
+    parser = argparse.ArgumentParser(description='Auction GUI login prefill')
+    parser.add_argument('--server', default='http://127.0.0.1:3001')
+    parser.add_argument('--admin-token')
+    args = parser.parse_args(argv)
     root = tk.Tk()
-    AdminApp(root)
+    app = AdminApp(root)
+    app.url.set(args.server)
+    app.token.set(args.admin_token if args.admin_token is not None else
+                  os.environ.get('FINAL_PROJECT_ADMIN_TOKEN', ''))
     root.mainloop()
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
